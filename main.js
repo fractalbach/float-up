@@ -36,8 +36,8 @@ const ANIMS = new Map([
 class Balloon {
     /**
      * Create a balloon of a specific size at a specific location.
-     * @param {Number} x position on x-axis of the balloon's string.
-     * @param {Number} y position on the y-axis of the top of the balloon.
+     * @param {Number} x middle of balloon
+     * @param {Number} y middle of balloon (also y-axis of string.)
      * @param {Number} r radius of the balloon
      */
     constructor(x, y, r) {

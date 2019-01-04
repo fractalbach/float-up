@@ -1,7 +1,7 @@
 <html>
   <body>
-    <canvas id="game" width="1000" height="1000"></canvas>
-    <canvas id="player" width="100" height="200"></canvas>
+      <canvas id="game" width="1000" height="1000"></canvas>
+    <!-- <canvas id="player" width="100" height="200"></canvas> -->
     <div style="display: none;">
       <img id="img_balloon" src="img/clear/balloon.png">
       <img id="img_grab" src="img/clear/grab.png">
@@ -9,18 +9,77 @@
       <img id="img_stand" src="img/clear/stand.png">
     </div>
 
+    <table id="debugger_input">
+        <tr><th colspan="2">Input Debugger</th></tr>
+        <tr><td>State:</td><td id="debug_state">0</td></tr>
+        <tr><td>Touch Time:</td><td id="debug_touchTime"></td></tr>
+        <tr><td>Touches:</td><td id="debug_touches"></td></tr>
+        <tr><td>diff:</td><td id="debug_diff"></td></tr>
+        <!-- <tr><td>up:</td><td id="debug_up" class="red">FALSE</td></tr>
+        <tr><td>down</td><td id="debug_down" class="red">FALSE</td></tr>
+        <tr><td>left</td><td id="debug_left" class="red">FALSE</td></tr>
+        <tr><td>right</td><td id="debug_right" class="red">FALSE</td></tr>
+        <tr><td>space</td><td id="debug_space" class="red">FALSE</td></tr> -->
+    </div>
+
     <style>
-        html,body {
-            padding: 0;
-            margin: 0;
-            overflow: auto;
+    html, body, #game {
+        position: fixed;
+        left: 0;
+        right: 0;
+        top: 0;
+        bottom: 0;
+    }
+    html, body {
+        background: #002;
+        margin: 0;
+        padding: 0;
+    }
+    #game {
+        background: #CCE;
+        margin: auto;
+        border: 1px solid white;
+    }
+    @media (orientation: landscape) {
+        #game {
+            width: calc(100vh - 2px);
+            height: calc(100vh - 2px);
         }
-        canvas {
+    }
+    @media (orientation: portrait) {
+        #game {
+            width: calc(100vw - 2px);
+            height: calc(100vw - 2px);
+        }
+    }
+
+        /* For debugging */
+        #debugger_input {
             position: fixed;
-            width: 100%;
+            top: 0;
+            left: 0;
+        }
+        table, tr, td {
+            border: thin solid black;
+        }
+        table {
+            background: rgba(0,0,0,0.8);
+            font-family: monospace;
+        }
+        th {
+            color: white;
+        }
+        td {
+            background: white;
+        }
+        .red {
+            background: lightpink;
+        }
+        .green {
+            background: lightgreen;
         }
     </style>
-
+    <script src="controls.js"></script>
     <script src="main.js"></script>
 
   </body>

@@ -1,11 +1,14 @@
 (function(){
 
-// canvas constants
+// main elements and constants
 const q = document.querySelector.bind(document);
+const overlay = q("#overlay");
 const canvas = q("#game");
 const ctx = canvas.getContext("2d");
 const GAME_WIDTH  = 1000;
 const GAME_HEIGHT = 1000;
+
+// canvas context settings init.
 ctx.lineWidth = 8;
 ctx.lineCap = 'round';
 
@@ -118,13 +121,13 @@ class Player {
 
     moveLeft() {
         if (this.x > 0) {
-            this.x -= 5;
+            this.x -= 10;
         }
     }
 
     moveRight() {
         if (this.x < (GAME_WIDTH - this.w)) {
-            this.x += 5;
+            this.x += 10;
         }
     }
 
@@ -228,13 +231,13 @@ function main() {
     let direction = 0;
     let firstTouch;
 
-    canvas.addEventListener("touchstart", function(event){
+    overlay.addEventListener("touchstart", function(event){
         touchTimeStart = performance.now();
         isTouching = 1;
         firstTouch = event.touches[0];
     });
 
-    canvas.addEventListener("touchmove", function(event){
+    overlay.addEventListener("touchmove", function(event){
         event.preventDefault();
         let diff = event.touches[0].clientX - firstTouch.clientX;
         q('#debug_diff').innerText = Math.floor(diff);
@@ -252,10 +255,11 @@ function main() {
         }
     });
 
-    canvas.addEventListener("touchend", function(event){
+    overlay.addEventListener("touchend", function(event){
         let touchTime = (performance.now() - touchTimeStart);
         if (touchTime < 100) {
             IM.turnOn(IM.CMD.ACTION);
+            return;
         }
         q('#debug_touchTime').innerText = Math.floor(touchTime) + ' ms'
         IM.turnOff(IM.CMD.LEFT);
@@ -265,7 +269,7 @@ function main() {
         firstTouch = undefined;
     });
 
-    canvas.addEventListener("touchcancel", function(event){
+    overlay.addEventListener("touchcancel", function(event){
         IM.turnOff(IM.CMD.LEFT);
         IM.turnOff(IM.CMD.RIGHT);
         isTouching = 0;
@@ -275,14 +279,23 @@ function main() {
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+function drawJoyBase(x, y) {
+    ctx.fillStyle = 'rgba(255, 100, 100, 0.5)';
+    drawCircle(x, y, 20);
+}
 
+function drawJoyStick(x0, y0, xf, yf) {
+    ctx.strokeStyle = 'lightgray';
+    drawLine(x0, y0, xf, yf);
+    ctx.fillStyle = 'black';
+    drawCircle(xf, yf, 10);
+}
 
     // THE LOOP
     const loop = function() {
         clearCanvas();
         IM.runCommands();
         debug_state.innerText = IM.stateString();
-
         p.step();
         for (let o of m.values()) {
             o.draw();
@@ -291,17 +304,11 @@ function main() {
             let rect = canvas.getBoundingClientRect();
             let x = firstTouch.clientX - rect.left;
             let y = firstTouch.clientY - rect.top;
-            ctx.fillStyle = 'rgba(255, 100, 100, 0.5)';
-            drawCircle(x, y, 20);
-            ctx.fillStyle = 'black';
-            if (direction === (-1)) {
-                ctx.strokeStyle = 'lightgray';
-                drawLine(x, y, x-15, y);
-                drawCircle(x-20, y, 10);
+            drawJoyBase(x, y);
+            if (direction === -1) {
+                drawJoyStick(x, y, x-15, y);
             } else if (direction === 1) {
-                ctx.strokeStyle = 'lightgray';
-                drawLine(x, y, x+15, y);
-                drawCircle(x+20, y, 10);
+                drawJoyStick(x, y, x+15, y);
             }
         }
         IM.turnOff(IM.CMD.ACTION);

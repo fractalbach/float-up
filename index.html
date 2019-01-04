@@ -33,15 +33,16 @@
         <tr><th colspan="2">Input Debugger</th></tr>
         <tr><td>State:</td><td id="debug_state">0</td></tr>
         <tr><td>Touch Time:</td><td id="debug_touchTime"></td></tr>
-        <tr><td>Touches:</td><td id="debug_touches"></td></tr>
-        <tr><td>diff:</td><td id="debug_diff"></td></tr>
+        <tr><td>distance from joystick</td><td id="debug_diff"></td></tr>
+        <tr><td>touch unit vector x</td><td id="debug_uvx"></td></tr>
+        <tr><td>touch unit vector y</td><td id="debug_uvy"></td></tr>
         <!-- <tr><td>up:</td><td id="debug_up" class="red">FALSE</td></tr>
         <tr><td>down</td><td id="debug_down" class="red">FALSE</td></tr>
         <tr><td>left</td><td id="debug_left" class="red">FALSE</td></tr>
         <tr><td>right</td><td id="debug_right" class="red">FALSE</td></tr>
         <tr><td>space</td><td id="debug_space" class="red">FALSE</td></tr> -->
     </div>
-    <div id="overlay"></div>
+    <canvas id="overlay" width="1000" height="1000"></div>
 
     <style>
     html, body, #game, #overlay {
@@ -74,31 +75,32 @@
         }
     }
 
-        /* For debugging */
-        #debugger_input {
-            position: fixed;
-            top: 0;
-            left: 0;
-        }
-        table, tr, td {
-            border: thin solid black;
-        }
-        table {
-            background: rgba(0,0,0,0.8);
-            font-family: monospace;
-        }
-        th {
-            color: white;
-        }
-        td {
-            background: white;
-        }
-        .red {
-            background: lightpink;
-        }
-        .green {
-            background: lightgreen;
-        }
+    /* For debugging */
+    #debugger_input {
+        position: fixed;
+        top: 0;
+        left: 0;
+    }
+    table, tr, td {
+        border: thin solid black;
+    }
+    table {
+        opacity: 0.5;
+        background: black;
+        font-family: monospace;
+    }
+    th {
+        color: white;
+    }
+    td {
+        background: white;
+    }
+    .red {
+        background: lightpink;
+    }
+    .green {
+        background: lightgreen;
+    }
     </style>
     <script src="controls.js"></script>
     <script src="main.js"></script>

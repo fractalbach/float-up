@@ -1,13 +1,13 @@
+var GAME;
 (function(){
 
 // main elements and constants
 const q = document.querySelector.bind(document);
-const overlay = q("#overlay");
 const canvas = q("#game");
-const overctx = overlay.getContext("2d");
 const ctx = canvas.getContext("2d");
 const GAME_WIDTH  = 1000;
 const GAME_HEIGHT = 1000;
+const MAX_PLAYER_SPEED = 8;
 
 // canvas context settings init.
 ctx.lineWidth = 8;
@@ -139,6 +139,7 @@ class Player {
         this.anim = ANIM_STAND;
         this.myBalloon = undefined;
         this.actionCooldown = 0;
+        this.friction = 0.5;
     }
 
     jump() {
@@ -158,31 +159,35 @@ class Player {
         this.isFalling = false;
         this.isGrabbing = true;
         this.myBalloon = balloon;
-        this.actionCooldown = 0;
     }
 
     moveLeft() {
         if (this.x > 0) {
-            this.x -= 10;
+            this.x -= MAX_PLAYER_SPEED;
         }
     }
 
     moveRight() {
-        if (this.x < (GAME_WIDTH - this.w)) {
-            this.x += 10;
+        if (this.x < this.w + GAME_WIDTH) {
+            this.x += MAX_PLAYER_SPEED;
         }
     }
 
-    moveUp() {
-        if (this.isGrabbing===true) {
-            this.y += 10;
+    moveUp() {}
+
+    moveDown(){}
+
+    directionalMove(unitVectorX, unitVectorY) {
+        let move = unitVectorX * MAX_PLAYER_SPEED;
+        if (((move < 0) && (this.x + move > 0)) ||
+            ((move > 0) && (this.x + move < GAME_WIDTH - this.w))
+        ){
+            this.x = this.x + move;
         }
     }
 
     step() {
-        if (this.actionCooldown > 0) {
-            this.actionCooldown--;
-        }
+        // this.doFriction();
         if (this.isGrabbing === true) {
             if (GameObjectManager.hasCollision(this, this.myBalloon)) {
                 return;
@@ -200,7 +205,28 @@ class Player {
             this.vy += 1
         }
         this.y += this.vy;
+        // this.doXmovement();
     }
+
+    doXmovement() {
+        if ((this.x + this.vx < 0) || (this.x + this.vx > (GAME_WIDTH - this.w))) {
+            this.vx = 0;
+        }
+        this.x += this.vx;
+    }
+
+    doFriction() {
+        if (Math.abs(this.vx) < this.friction) {
+            this.vx = 0;
+            return;
+        }
+        if (this.vx > 0) {
+            this.vx -= this.friction
+        } else {
+            this.vx += this.friction
+        }
+    }
+
 
     draw() {
         ctx.drawImage(ANIMS.get(this.anim),
@@ -277,6 +303,7 @@ class GameObjectManager {
         this.objects.set(id, object);
         // this._rebuild();
         return id;
+        return;
     }
 
     delete(id) {
@@ -314,16 +341,11 @@ class GameObjectManager {
         return results;
     }
 
-
     _rebuild() {
         // this._sortedObjectsX = Array.from(this.objects.values(GameObjectManager.compareX));
         // this._sortedObjectsY = Array.from(this.objects.values(GameObjectManager.compareY));
     }
-
-
 }
-
-
 
 
 
@@ -336,21 +358,8 @@ class GameObjectManager {
 // The Game View is in regards to how the game itself is displayed.  This
 // is where special drawing functions are declared.
 
-
-class GameObject {
-    static drawBoundingBox(ctx, object) {
-        ctx.fillStyle = 'rgba(255, 0, 0, 0.1)'
-        ctx.fillRect(
-            object.lowX(),
-            object.lowY(),
-            object.highX() - object.lowX(),
-            object.highY() - object.lowY()
-        );
-    }
-}
-
 // __________________________________________________________________
-//      Drawing Functions
+//      General Drawing Functions
 // ==================================================================
 
 function drawCircle(ctx, x, y, r) {
@@ -366,57 +375,100 @@ function drawLine(ctx, x0, y0, xf, yf) {
     ctx.stroke();
 }
 
-function drawJoyBase(ctx, x, y) {
-    ctx.fillStyle = 'rgba(255, 100, 100, 0.5)';
-    drawCircle(ctx, x, y, 20);
-}
-
-function drawJoyStick(ctx, x0, y0, xf, yf) {
-    ctx.strokeStyle = 'lightgray';
-    drawLine(ctx, x0, y0, xf, yf);
-    ctx.fillStyle = 'black';
-    drawCircle(ctx, xf, yf, 10);
-}
-
 function clearCanvas(ctx) {
     ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT)
 }
 
-// used for overlay because you need to compute the current width/height.
-function clearOverlay(overlay, ctx) {
-    let cs = getComputedStyle(overlay);
-    let width = parseInt(cs.getPropertyValue('width'), 10);
-    let height = parseInt(cs.getPropertyValue('height'), 10);
-    ctx.clearRect(0, 0, width, height)
-}
-
-// function drawGrid(ctx, sideLength, canvasLength) {
-//     let u = sideLength
-//     let max = canvasLength
-//     for (let i=0; i<(Math.floor(max/u)); i++) {
-//         // vertical lines:
-//         ctx.beginPath();
-//         ctx.moveTo(i*u, 0);
-//         ctx.lineTo(i*u, max);
-//         ctx.stroke();
-//         // horizontal lines:
-//         ctx.beginPath()
-//         ctx.moveTo(0, i*u);
-//         ctx.lineTo(max, i*u);
-//         ctx.stroke();
-//     }
-// }
-
-
 // __________________________________________________________________
-//      Math Functions
+//      Specialized Drawing Functions
 // ==================================================================
 
-
-function unitVector(a,b) {
-    let norm = Math.sqrt(a*a + b*b);
-    return [a/norm, b/norm];
+function drawBoundingBox(ctx, object) {
+    ctx.fillStyle = 'rgba(255, 0, 0, 0.1)'
+    ctx.fillRect(
+        object.lowX(),
+        object.lowY(),
+        object.highX() - object.lowX(),
+        object.highY() - object.lowY()
+    );
 }
+
+
+
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//                              Chapter 4
+//
+//                      Putting it all Together
+//
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// The Game Object helps wrap together all of the bits and peices.
+// The Game Loop is what runs every frame.
+// The Main Function is called once all of the resources on the web page
+// are loaded, creates the Game Object, and then kicks off the Game Loop!
+
+// __________________________________________________________________
+//      Game Object
+// ==================================================================
+
+class Game {
+    constructor() {
+        this.GOM        = new GameObjectManager()
+        this.player     = new Player(500, 500, 100, 150)
+        this.controller = GameController
+        this.controller.addControlEventListeners();
+        this.GOM.add(this.player);
+    }
+
+    step() {
+        this.controller.processInputsAndStep(this);
+        this.player.step();
+    }
+
+    clearScreen() {
+        clearCanvas(ctx);
+        this.controller.clearOverlay();
+    }
+
+    drawScreen() {
+        // draw each of the objects onto the screen.
+        this.GOM.forEach(function(object){
+            object.draw();
+            drawBoundingBox(ctx, object);
+        });
+
+    }
+
+    determinePlayerAction() {
+        if (this.player.isGrabbing !== true) {
+            let collisions = this.GOM.findCollisionsWith(this.player);
+            if (collisions.length > 0) {
+                this.player.grab(collisions[0])
+                this.controller.resetAllRequests();
+                return;
+            }
+        }
+        this.player.jump()
+    }
+
+    updateDebugger() {
+        q('#debug_touchTime').innerText = Math.floor(this.controller.touchTime) + ' ms'
+    }
+
+    initExample1() {
+        let g = (n)=>70*n
+        let b = new Balloon(g(3), g(8), g(1))
+        this.GOM.add(b);
+        for (let i=0; i<10; i++) {
+            this.GOM.add(new Balloon(
+                900*Math.random()+50,
+                600*Math.random(),
+                g(1)
+            ));
+        }
+    }
+}
+
+
 
 
 // __________________________________________________________________
@@ -424,224 +476,23 @@ function unitVector(a,b) {
 // ==================================================================
 
 function main() {
-
-    // arbitrary conversion function to get relative sizes
-    // of example objects the same.
-    let g = (n)=>70*n
-
-    // Init example object map.
-    let GOM = new GameObjectManager();
-
-    let p = new Player(g(2), g(3), g(1), g(2))
-    let b = new Balloon(g(3), g(8), g(1))
-
-
-    GOM.add(p);
-    GOM.add(b);
-    for (let i=0; i<10; i++) {
-        GOM.add(new Balloon(
-            900*Math.random()+50,
-            600*Math.random(),
-            g(1)
-        ));
-    }
-
-    // Initialize the input manager and the input event listeners.
-    let IM = new InputManager();
-    console.log(IM);
-
-    const debug_state = q("#debug_state");
-
-    const playerAction = function() {
-        if (p.actionCooldown > 0) {
-            // if (p.isGrabbing) {
-            //     p.moveUp();
-            // }
-            return;
-        }
-        if (p.isGrabbing !== true) {
-            let collisions = GOM.findCollisionsWith(p);
-            if (collisions.length > 0) {
-                p.grab(collisions[0])
-                p.actionCooldown = 5;
-            } else {
-                p.jump()
-            }
-        } else {
-            p.jump();
-        }
-        IM.turnOff(IM.CMD.ACTION);
-    }
-
-    // define the game command functions.
-    IM.setCommandFunction(IM.CMD.ACTION, playerAction);
-    IM.setCommandFunction(IM.CMD.UP, playerAction);
-    IM.setCommandFunction(IM.CMD.LEFT, function(){
-        p.moveLeft()
-    });
-    IM.setCommandFunction(IM.CMD.RIGHT, function(){
-        p.moveRight()
-    });
-
-    // add event listeners to trigger the input manager.
-    window.addEventListener("keydown", function(event) {
-        IM.pressKey(event.code);
-    });
-    window.addEventListener("keyup", function(event) {
-        IM.releaseKey(event.code);
-    });
-
-
-
-    // __________________________________________________________________
-    //      Touch Controls
-    // ==================================================================
-
-    let touchTimeStart = 0;
-    let touchTime = 0;
-    let isTouching = 0;
-    let direction = 0;
-    let firstTouch;
-
-
-    overlay.addEventListener("touchstart", function(event) {
-        touchTimeStart = performance.now();
-        touchTime = 0;
-
-        // makes a joystick appear.
-        isTouching = 1;
-        firstTouch = event.touches[0];
-    });
-
-
-    overlay.addEventListener("touchmove", function(event) {
-        event.preventDefault();
-        touchTime = (performance.now() - touchTimeStart);
-
-        // caclulate distance from the joystick
-        let diff = event.touches[0].clientX - firstTouch.clientX;
-        let diffY = event.touches[0].clientY - firstTouch.clientY;
-        let uv = unitVector(diff, diffY);
-        let uvx = Math.floor(uv[0] * 100)/100;
-        let uvy = Math.floor(uv[1] * 100)/100;
-        let floordiff = Math.floor(diff);
-        q('#debug_diff').innerText = (floordiff<0?"":"+") + floordiff ;
-        q('#debug_uvx').innerText = (uvx<0?"":"+") + uvx;
-        q('#debug_uvy').innerText = (uvy<0?"":"+") + uvy;
-
-        // TODO: Change to using unit vectors instead.
-        if (diff > 0) {
-            direction = 1
-            IM.turnOn(IM.CMD.RIGHT);
-        } else {
-            IM.turnOff(IM.CMD.RIGHT);
-        }
-        if (diff < 0) {
-            direction = -1;
-            IM.turnOn(IM.CMD.LEFT);
-        } else {
-            IM.turnOff(IM.CMD.LEFT);
-        }
-    });
-
-    overlay.addEventListener("touchend", function(event){
-        touchTime = (performance.now() - touchTimeStart);
-        if (touchTime < 100) {
-            IM.turnOn(IM.CMD.ACTION);
-            if (p.isFalling === false) {
-                return;
-            }
-        }
-        IM.turnOff(IM.CMD.LEFT);
-        IM.turnOff(IM.CMD.RIGHT);
-        isTouching = 0;
-        direction = 0;
-        firstTouch = undefined;
-    });
-
-
-    overlay.addEventListener("touchcancel", function(event){
-        IM.turnOff(IM.CMD.LEFT);
-        IM.turnOff(IM.CMD.RIGHT);
-        isTouching = 0;
-        direction = 0;
-        firstTouch = undefined;
-    });
-
+    let game = new Game()
+    game.initExample1()
+    GAME = game;
 
     // __________________________________________________________________
     //      Game Loop
     // ==================================================================
-
-    const loop = function() {
-
-        // clear screen of all the junk that is currently on it.
-        clearCanvas(ctx);
-        clearOverlay(overlay, overctx);
-
-        // run commands based on what the user is requesting.
-        IM.runCommands();
-        debug_state.innerText = IM.stateString();
-
-        // do a step through the game state.
-        p.step();
-
-        // redraw things.
-        GOM.forEach(function(object){
-            object.draw();
-            GameObject.drawBoundingBox(ctx, object);
-        });
-
-        // draw joystick on the screen.
-        // TODO: MOVE THIS.
-        if (firstTouch !== undefined) {
-            // let rect = canvas.getBoundingClientRect();
-            // let x = firstTouch.clientX - rect.left;
-            // let y = firstTouch.clientY - rect.top;
-            let x = firstTouch.clientX;
-            let y = firstTouch.clientY;
-            drawJoyBase(overctx, x, y);
-            if (direction === -1) {
-                drawJoyStick(overctx, x, y, x-15, y);
-            } else if (direction === 1) {
-                drawJoyStick(overctx, x, y, x+15, y);
-            }
-        }
-
-        // KLUDGE:
-        // turn off jump because we don't want it firing constantly.
-        // TODO:  find a better way to do this.
-        IM.turnOff(IM.CMD.ACTION);
-
-        // additional debugging features.
-        q('#debug_touchTime').innerText = Math.floor(touchTime) + ' ms'
-
+    function loop() {
+        game.clearScreen()
+        game.step();
+        game.drawScreen()
+        game.updateDebugger();
         window.requestAnimationFrame(loop);
     }
+
     window.requestAnimationFrame(loop);
-    console.log(GOM);
 }
-
-
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-//                              Chapter 3
-//
-//                        The Game Controller
-//
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// Although this is not literally a game controller, it implements one. This
-// chapter enables the humans to interact with the game.
-
-
-
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-//                              Chapter 4
-//
-//                          The Main Game Loop
-//
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// The Game Loop is when everything gets wrapped together and kicked off.
-
 
 
 

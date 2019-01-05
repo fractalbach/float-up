@@ -81,10 +81,31 @@ class Balloon {
         );
     }
 
-    lowX(){return this.x - r;}
-    lowY(){return this.y - r;}
-    highX(){return this.x + r;}
-    highY(){return this.y + r;}
+    // TODO: rename "string" in "BalloonString" to "rope" or "twine".
+    //       it's WAY TOO CONFUSING to have the word "string" everywhere.
+
+    // TODO: seperate out Balloon and the BalloonString
+    //       do this when you need the balloons to collide with each other.
+
+    // Bounds for the BalloonString.
+    stringX() {return this.x - 0.5*this.r/2;}
+    stringY() {return this.y + 2.5*this.r;}
+    stringW() {return this.r/2;}
+    stringH() {return this.r/2;}
+
+    // Currently detecting collisions with the string, which is what is
+    // needed right now.
+    lowX()  {return this.stringX()}
+    lowY()  {return this.stringY()}
+    highX() {return this.stringX() + this.stringW()}
+    highY() {return this.stringY() + this.stringH()}
+
+    // Bounds for the Balloon itself.
+    // lowX(){return this.x - this.r;}
+    // lowY(){return this.y - this.r;}
+    // highX(){return this.x + this.r;}
+    // highY(){return this.y + this.r;}
+
 }
 
 
@@ -114,7 +135,10 @@ class Player {
         this.vx = 0;
         this.vy = 0;
         this.isFalling = false;
+        this.isGrabbing = false;
         this.anim = ANIM_STAND;
+        this.myBalloon = undefined;
+        this.actionCooldown = 0;
     }
 
     jump() {
@@ -122,13 +146,19 @@ class Player {
             this.anim = ANIM_JUMP;
             this.vy -= 20;
             this.isFalling = true;
+            this.isGrabbing = false;
         }
     }
 
-    grab() {
-        // check if you are beneath a balloon.
-        //
-        //
+    grab(balloon) {
+        // this.y = balloon.y;
+        console.log("grab!")
+        this.anim = ANIM_GRAB;
+        this.vy = 0;
+        this.isFalling = false;
+        this.isGrabbing = true;
+        this.myBalloon = balloon;
+        this.actionCooldown = 0;
     }
 
     moveLeft() {
@@ -143,7 +173,24 @@ class Player {
         }
     }
 
+    moveUp() {
+        if (this.isGrabbing===true) {
+            this.y += 10;
+        }
+    }
+
     step() {
+        if (this.actionCooldown > 0) {
+            this.actionCooldown--;
+        }
+        if (this.isGrabbing === true) {
+            if (GameObjectManager.hasCollision(this, this.myBalloon)) {
+                return;
+            }
+            // uh oh, you've lost your balloon!
+            this.myBalloon = undefined;
+            this.isGrabbing = false;
+        }
         if ((this.y + this.vy) > (GAME_HEIGHT - this.h)) {
             this.y = GAME_HEIGHT - this.h + 1
             this.vy = 0;
@@ -173,6 +220,19 @@ class Player {
 // __________________________________________________________________
 //      Game Object Manager
 // ==================================================================
+// The game object manager abstracts away the data structures used
+// to hold and compare game objects.  One of it's main goals is to
+// support collision detection, which often relies upon special
+// structures that are un-natural to work with at a higher level.
+
+// Currently:
+// is NOT implemented efficiently because there aren't that many
+// objects that need collision detection.  When needed, swap out
+// the underlying structures here.
+
+// For better efficiency (once it's needed):
+// TODO: use a self-balancing binary search tree instead of sorted list.
+// TODO: make sure that tree is able to re-sort itself once objects move.
 
 let nextid = 333;
 
@@ -191,34 +251,75 @@ class GameObjectManager {
         return nextid;
     }
 
-    constructor() {
-        this.objects = new Map();
-        this._sortedObjectsX = new Array();
-        this._sortedObjectsY = new Array();
+    static hasCollision(A, B) {
+        if (!A || !B) {
+            return false;
+        }
+        if (
+            A.lowX() < B.highX() &&
+            B.lowX() < A.highX() &&
+            A.lowY() < B.highY() &&
+            B.lowY() < A.highY()
+        ){
+            return true;
+        }
+        return false;
     }
 
-    add(item) {
+    constructor() {
+        this.objects = new Map();
+        // this._sortedObjectsX = new Array();
+        // this._sortedObjectsY = new Array();
+    }
+
+    add(object) {
         let id = GameObjectManager.makeUID();
-        this.objects.set(id, item);
-        this._rebuild();
+        this.objects.set(id, object);
+        // this._rebuild();
         return id;
     }
 
     delete(id) {
         let result = this.objects.delete(id);
-        this._rebuild();
+        // this._rebuild();
         return result;
     }
 
-    resort() {
-        this._sortedObjectsX.sort(GameObjectManager.compareX);
-        this._sortedObjectsY.sort(GameObjectManager.compareX);
+    // update whenever the underlying objects have moved around.
+    update() {
+        // this._sortedObjectsX.sort(GameObjectManager.compareX);
+        // this._sortedObjectsY.sort(GameObjectManager.compareX);
     }
 
-    _rebuild() {
-        this._sortedObjectsX = Array.from(this.objects.values(GameObjectManager.compareX));
-        this._sortedObjectsX = Array.from(this.objects.values(GameObjectManager.compareY));
+    // forEach has similar behavior to Array.forEach
+    forEach(fn) {
+        for (let v of this.objects.values()) {
+            fn(v);
+        }
     }
+
+    // return all objects that are colliding with the given object.
+    // A is a reference to an object.
+    findCollisionsWith(A) {
+        let results = new Array();
+        // TODO: use binary search instead.
+        for (let B of this.objects.values()) {
+            if (A == B) {
+                continue;
+            }
+            if (GameObjectManager.hasCollision(A,B)) {
+                results.push(B);
+            }
+        }
+        return results;
+    }
+
+
+    _rebuild() {
+        // this._sortedObjectsX = Array.from(this.objects.values(GameObjectManager.compareX));
+        // this._sortedObjectsY = Array.from(this.objects.values(GameObjectManager.compareY));
+    }
+
 
 }
 
@@ -235,6 +336,18 @@ class GameObjectManager {
 // The Game View is in regards to how the game itself is displayed.  This
 // is where special drawing functions are declared.
 
+
+class GameObject {
+    static drawBoundingBox(ctx, object) {
+        ctx.fillStyle = 'rgba(255, 0, 0, 0.1)'
+        ctx.fillRect(
+            object.lowX(),
+            object.lowY(),
+            object.highX() - object.lowX(),
+            object.highY() - object.lowY()
+        );
+    }
+}
 
 // __________________________________________________________________
 //      Drawing Functions
@@ -320,29 +433,54 @@ function main() {
     let GOM = new GameObjectManager();
 
     let p = new Player(g(2), g(3), g(1), g(2))
-    let b = new Balloon(g(3), g(3), g(1))
+    let b = new Balloon(g(3), g(8), g(1))
+
 
     GOM.add(p);
     GOM.add(b);
+    for (let i=0; i<10; i++) {
+        GOM.add(new Balloon(
+            900*Math.random()+50,
+            600*Math.random(),
+            g(1)
+        ));
+    }
 
     // Initialize the input manager and the input event listeners.
     let IM = new InputManager();
-    console.log(IM)
+    console.log(IM);
 
     const debug_state = q("#debug_state");
 
+    const playerAction = function() {
+        if (p.actionCooldown > 0) {
+            // if (p.isGrabbing) {
+            //     p.moveUp();
+            // }
+            return;
+        }
+        if (p.isGrabbing !== true) {
+            let collisions = GOM.findCollisionsWith(p);
+            if (collisions.length > 0) {
+                p.grab(collisions[0])
+                p.actionCooldown = 5;
+            } else {
+                p.jump()
+            }
+        } else {
+            p.jump();
+        }
+        IM.turnOff(IM.CMD.ACTION);
+    }
+
     // define the game command functions.
-    IM.setCommandFunction(IM.CMD.ACTION, function(){
-        p.jump()
-    });
+    IM.setCommandFunction(IM.CMD.ACTION, playerAction);
+    IM.setCommandFunction(IM.CMD.UP, playerAction);
     IM.setCommandFunction(IM.CMD.LEFT, function(){
         p.moveLeft()
     });
     IM.setCommandFunction(IM.CMD.RIGHT, function(){
         p.moveRight()
-    });
-    IM.setCommandFunction(IM.CMD.UP, function(){
-        p.jump()
     });
 
     // add event listeners to trigger the input manager.
@@ -449,9 +587,11 @@ function main() {
         p.step();
 
         // redraw things.
-        for (let o of GOM.objects.values()) {
-            o.draw();
-        }
+        GOM.forEach(function(object){
+            object.draw();
+            GameObject.drawBoundingBox(ctx, object);
+        });
+
         // draw joystick on the screen.
         // TODO: MOVE THIS.
         if (firstTouch !== undefined) {
@@ -479,7 +619,7 @@ function main() {
         window.requestAnimationFrame(loop);
     }
     window.requestAnimationFrame(loop);
-
+    console.log(GOM);
 }
 
 

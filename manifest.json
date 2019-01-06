@@ -2,7 +2,6 @@
     "dir": "ltr",
     "lang": "ro",
     "name": "FloatUp",
-    "scope": "/float-up/",
     "display": "standalone",
     "start_url": "https://fractalbach.github.io/float-up/",
     "short_name": "FloatUp",

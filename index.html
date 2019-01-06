@@ -104,16 +104,14 @@
     <script src="main.js"></script>
 
     <script>
-    if (navigator.serviceWorker.controller) {
-      console.log('[PWA Builder] active service worker found, no need to register')
-    } else {
-
-    //Register the ServiceWorker
-      navigator.serviceWorker.register('sw/pwabuilder-sw.js', {
-        scope: './'
-      }).then(function(reg) {
-        console.log('Service worker has been registered for scope:'+ reg.scope);
-      });
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register('sw.js').then(function(registration) {
+            console.log('ServiceWorker registration successful with scope: ', registration.scope);
+          }, function(err) {
+            console.log('ServiceWorker registration failed: ', err);
+          });
+        });
     }
 </script>
   </body>

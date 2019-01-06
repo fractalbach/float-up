@@ -3,7 +3,7 @@
     "lang": "ro",
     "name": "FloatUp",
     "display": "standalone",
-    "start_url": "https://fractalbach.github.io/float-up/",
+    "start_url": ".",
     "short_name": "FloatUp",
     "theme_color": "#238ad0",
     "description": "Grab the balloons to get as high as you can!  Currently a prototype still in development.",
@@ -13,32 +13,32 @@
     "prefer_related_applications": false,
     "icons": [
     {
-      "src": "/icons/a_48_48.png",
+      "src": "https://fractalbach.github.io/float-up/icons/a_48_48.png",
       "type": "image/png",
       "sizes": "48x48"
     },
     {
-      "src": "/icons/a_72_72.png",
+      "src": "https://fractalbach.github.io/float-up//icons/a_72_72.png",
       "type": "image/png",
       "sizes": "72x72"
     },
     {
-      "src": "/icons/a_96_96.png",
+      "src": "https://fractalbach.github.io/float-up//icons/a_96_96.png",
       "type": "image/png",
       "sizes": "96x96"
     },
     {
-      "src": "/icons/a_144_144.png",
+      "src": "https://fractalbach.github.io/float-up//icons/a_144_144.png",
       "type": "image/png",
       "sizes": "144x144"
     },
     {
-      "src": "/icons/a_192_192.png",
+      "src": "https://fractalbach.github.io/float-up//icons/a_192_192.png",
       "type": "image/png",
       "sizes": "192x192"
     },
     {
-      "src": "/icons/a_512_512.png",
+      "src": "https://fractalbach.github.io/float-up//icons/a_512_512.png",
       "type": "image/png",
       "sizes": "512_512"
     }

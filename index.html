@@ -29,18 +29,8 @@
       <img id="img_stand" src="img/clear/stand.png">
     </div>
 
-    <table id="debugger_input">
-        <tr><th colspan="2">Input Debugger</th></tr>
-        <tr><td>State:</td><td id="debug_state">0</td></tr>
-        <tr><td>Touch Time:</td><td id="debug_touchTime"></td></tr>
-        <tr><td>distance from joystick</td><td id="debug_diff"></td></tr>
-        <tr><td>touch unit vector x</td><td id="debug_uvx"></td></tr>
-        <tr><td>touch unit vector y</td><td id="debug_uvy"></td></tr>
-        <!-- <tr><td>up:</td><td id="debug_up" class="red">FALSE</td></tr>
-        <tr><td>down</td><td id="debug_down" class="red">FALSE</td></tr>
-        <tr><td>left</td><td id="debug_left" class="red">FALSE</td></tr>
-        <tr><td>right</td><td id="debug_right" class="red">FALSE</td></tr>
-        <tr><td>space</td><td id="debug_space" class="red">FALSE</td></tr> -->
+    <table id="debugger">
+        <tr><th colspan="2">Score</th></tr>
     </table>
     <canvas id="overlay" width="1000" height="1000"></div>
 
@@ -78,7 +68,7 @@
     }
 
     /* For debugging */
-    #debugger_input {
+    #debugger {
         position: fixed;
         top: 0;
         left: 0;
@@ -87,9 +77,10 @@
         border: thin solid black;
     }
     table {
-        opacity: 0.5;
+        opacity: 0.8;
         background: black;
-        font-family: monospace;
+        /* font-family: monospace; */
+        font-family: fantasy;
     }
     th {
         color: white;
@@ -105,6 +96,7 @@
     }
     </style>
     <!-- <script src="controls.js"></script> -->
+    <script src="debugger.js"></script>
     <script src="betterControls.js"></script>
     <script src="main.js"></script>
 

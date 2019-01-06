@@ -36,6 +36,11 @@ const ANIMS = new Map([
 ]);
 
 
+// global variables.
+// middle of the screen.
+let currentAltitude = 500;
+
+
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //                              Chapter 1
 //
@@ -69,16 +74,12 @@ class Balloon {
      * @param {Number} r radius of the balloon
      */
     constructor(x, y, r) {
+        this.type = 'Balloon';
         this.x = x;
         this.y = y;
         this.r = r;
-    }
-
-    draw() {
-        ctx.drawImage(IMG_BALLOON,
-            0, 0, 500, 1000,
-            (this.x - this.r), (this.y - this.r), (2*this.r), (4*this.r)
-        );
+        this.altitude = y;
+        this.id = 0;
     }
 
     // TODO: rename "string" in "BalloonString" to "rope" or "twine".
@@ -128,6 +129,7 @@ class Player {
      * @param {Number} h height.
      */
     constructor(x,y,w,h) {
+        this.type = 'Player';
         this.x = x;
         this.y = y;
         this.w = w;
@@ -140,6 +142,7 @@ class Player {
         this.myBalloon = undefined;
         this.actionCooldown = 0;
         this.friction = 0.5;
+        this.altitude = 0;
     }
 
     jump() {
@@ -227,14 +230,6 @@ class Player {
         }
     }
 
-
-    draw() {
-        ctx.drawImage(ANIMS.get(this.anim),
-            0, 0, 250, 500,
-            this.x, this.y, this.w, this.h
-        );
-    }
-
     lowX(){return this.x}
     lowY(){return this.y}
     highX(){return this.x + this.w}
@@ -260,24 +255,29 @@ class Player {
 // TODO: use a self-balancing binary search tree instead of sorted list.
 // TODO: make sure that tree is able to re-sort itself once objects move.
 
-let nextid = 333;
+GameObjectManager = (function(){
 
-class GameObjectManager {
+    let nextid = 333;
+    let objects = new Map();
 
-    static compareX (object1, object2) {
-        return (object1.lowX() - object2.lowX())
+    function size() {
+        return objects.size;
     }
 
-    static compareY (object1, object2) {
-        return (object1.lowY() - object2.lowY())
-    }
-
-    static makeUID() {
+    function _makeUID() {
         nextid++;
         return nextid;
     }
 
-    static hasCollision(A, B) {
+    function compareX (object1, object2) {
+        return (object1.lowX() - object2.lowX())
+    }
+
+    function compareY (object1, object2) {
+        return (object1.lowY() - object2.lowY())
+    }
+
+    function hasCollision(A, B) {
         if (!A || !B) {
             return false;
         }
@@ -292,60 +292,54 @@ class GameObjectManager {
         return false;
     }
 
-    constructor() {
-        this.objects = new Map();
-        // this._sortedObjectsX = new Array();
-        // this._sortedObjectsY = new Array();
-    }
-
-    add(object) {
-        let id = GameObjectManager.makeUID();
-        this.objects.set(id, object);
-        // this._rebuild();
+    function add(object) {
+        let id = _makeUID();
+        object.id = id;
+        objects.set(id, object);
         return id;
-        return;
     }
 
-    delete(id) {
-        let result = this.objects.delete(id);
-        // this._rebuild();
+    function remove(id) {
+        let result = objects.delete(id);
         return result;
     }
 
-    // update whenever the underlying objects have moved around.
-    update() {
-        // this._sortedObjectsX.sort(GameObjectManager.compareX);
-        // this._sortedObjectsY.sort(GameObjectManager.compareX);
-    }
-
     // forEach has similar behavior to Array.forEach
-    forEach(fn) {
-        for (let v of this.objects.values()) {
+    function forEach(fn) {
+        for (let v of objects.values()) {
             fn(v);
         }
     }
 
     // return all objects that are colliding with the given object.
     // A is a reference to an object.
-    findCollisionsWith(A) {
+    function findCollisionsWith(A) {
         let results = new Array();
         // TODO: use binary search instead.
-        for (let B of this.objects.values()) {
+        for (let B of objects.values()) {
             if (A == B) {
                 continue;
             }
-            if (GameObjectManager.hasCollision(A,B)) {
+            if (hasCollision(A,B)) {
                 results.push(B);
             }
         }
         return results;
     }
 
-    _rebuild() {
-        // this._sortedObjectsX = Array.from(this.objects.values(GameObjectManager.compareX));
-        // this._sortedObjectsY = Array.from(this.objects.values(GameObjectManager.compareY));
+    // GameObjectManager public interfaces.
+    return {
+        size,
+        add,
+        remove,
+        forEach,
+        findCollisionsWith,
+        hasCollision,
+        compareX,
+        compareY,
     }
-}
+
+}());
 
 
 
@@ -357,6 +351,55 @@ class GameObjectManager {
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // The Game View is in regards to how the game itself is displayed.  This
 // is where special drawing functions are declared.
+
+const GameView = (function(){
+
+    let cameraY = 0;
+
+    // moves the screen upwards (increases altitude) when the Player
+    // is more than halfway up the screen.
+    function updateAltitude(player) {
+        if (player.y < 500) {
+            let n = (500 - player.y);
+            currentAltitude += n;
+            player.y +=n;
+            GameObjectManager.forEach(function(object){
+                object.y += n;
+            })
+        }
+    }
+
+
+    function draw(object) {
+        switch (object.type) {
+            case 'Balloon': return drawBalloon(object);
+            case 'Player':  return drawPlayer(object);
+        }
+    }
+
+    function drawPlayer(player) {
+        ctx.drawImage(ANIMS.get(player.anim),
+            0, 0, 250, 500,
+            player.x, player.y, player.w, player.h
+        );
+    }
+
+
+    function drawBalloon(b) {
+        ctx.drawImage(IMG_BALLOON,
+            0, 0, 500, 1000,
+            (b.x - b.r), (b.y - b.r), (2*b.r), (4*b.r)
+        );
+    }
+
+    return {
+        draw,
+        drawPlayer,
+        drawBalloon,
+        updateAltitude,
+    }
+
+}())
 
 // __________________________________________________________________
 //      General Drawing Functions
@@ -394,6 +437,17 @@ function drawBoundingBox(ctx, object) {
 }
 
 
+function drawPlayerBoundingBox(ctx, object) {
+    ctx.fillStyle = 'rgba(0, 255, 0, 0.1)'
+    ctx.fillRect(
+        object.lowX(),
+        object.lowY(),
+        object.highX() - object.lowX(),
+        object.highY() - object.lowY()
+    );
+}
+
+
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //                              Chapter 4
@@ -412,16 +466,35 @@ function drawBoundingBox(ctx, object) {
 
 class Game {
     constructor() {
-        this.GOM        = new GameObjectManager()
+        this.GOM        = GameObjectManager
         this.player     = new Player(500, 500, 100, 150)
         this.controller = GameController
         this.controller.addControlEventListeners();
-        this.GOM.add(this.player);
+        this.initDebugger()
+        this.score = 0;
+        this.highestScore = 0;
     }
 
     step() {
         this.controller.processInputsAndStep(this);
         this.player.step();
+        GameView.updateAltitude(this.player);
+        GameObjectManager.forEach((object)=>{
+            if (object.y > GAME_HEIGHT) {
+                GameObjectManager.remove(object.id);
+                this.makeRandBalloonAtTopOfScreen();
+            }
+        })
+        // updateScore
+        if (this.score > this.highestScore) {
+            this.highestScore = this.score;
+        }
+        if (this.player.y >= GAME_HEIGHT - this.player.h) {
+            this.score = 0;
+            currentAltitude = 500;
+        } else {
+            this.score = Math.floor((currentAltitude - 500) / 100)
+        }
     }
 
     clearScreen() {
@@ -430,12 +503,14 @@ class Game {
     }
 
     drawScreen() {
+        // draw the player.
+        GameView.drawPlayer(this.player);
+        drawPlayerBoundingBox(ctx, this.player);
         // draw each of the objects onto the screen.
         this.GOM.forEach(function(object){
-            object.draw();
+            GameView.draw(object);
             drawBoundingBox(ctx, object);
         });
-
     }
 
     determinePlayerAction() {
@@ -450,18 +525,30 @@ class Game {
         this.player.jump()
     }
 
+    initDebugger() {
+        Debugger.add('hig', 'Highest Score');
+        Debugger.add('alt', 'Altitude');
+        Debugger.add('sco', 'Score');
+    }
+
     updateDebugger() {
-        q('#debug_touchTime').innerText = Math.floor(this.controller.touchTime) + ' ms'
+        Debugger.set('hig', this.highestScore);
+        Debugger.set('alt', currentAltitude - 500);
+        Debugger.set('sco', this.score);
+    }
+
+    makeRandBalloonAtTopOfScreen() {
+        this.GOM.add(new Balloon((Math.random()*(900-100)+100), -210, 70));
     }
 
     initExample1() {
         let g = (n)=>70*n
         let b = new Balloon(g(3), g(8), g(1))
         this.GOM.add(b);
-        for (let i=0; i<10; i++) {
+        for (let i=0; i<20; i++) {
             this.GOM.add(new Balloon(
-                900*Math.random()+50,
-                600*Math.random(),
+                900*Math.random()-50,
+                850 - (i * 50),
                 g(1)
             ));
         }

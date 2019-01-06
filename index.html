@@ -3,20 +3,22 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <title>Float up</title>
+        <title>FloatUp</title>
         <meta name="author" content="Achenbach">
-        <meta name="description" content="Prototype of the floating-up game. Still under development">
+        <meta name="description" content="Grab the balloons to get as high as you can!  Currently a prototype still in development.">
         <meta name='revised' content='Thursday, January 3, 2019'>
         <meta name='date' content='Sep. 27, 2010'>
 
-        <meta name="og:title" content="Float Up"/>
-        <meta name="og:description" content="Prototype of the floating-up game. Still under development"/>
+        <meta name="og:title" content="FloatUp"/>
+        <meta name="og:description" content="Grab the balloons to get as high as you can!  Currently a prototype still in development."/>
         <meta name="og:type" content="game"/>
         <meta name="og:url" content="https://fractalbach.github.io/float-up/"/>
-        <meta name="og:image" content="https://github.com/fractalbach/float-up/blob/master/img/drawing.png"/>
+        <meta name="og:image" content="https://github.com/fractalbach/float-up/blob/master/icons/a_512_512.png"/>
 
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+        <link rel="manifest" href="manifest.json">
 
     </head>
   <body>
@@ -100,5 +102,18 @@
     <script src="betterControls.js"></script>
     <script src="main.js"></script>
 
+    <script>
+    if (navigator.serviceWorker.controller) {
+      console.log('[PWA Builder] active service worker found, no need to register')
+    } else {
+
+    //Register the ServiceWorker
+      navigator.serviceWorker.register('sw/pwabuilder-sw.js', {
+        scope: './'
+      }).then(function(reg) {
+        console.log('Service worker has been registered for scope:'+ reg.scope);
+      });
+    }
+</script>
   </body>
 </html>

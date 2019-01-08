@@ -1,10 +1,11 @@
 // Service Workers
 
+    const CACHE_NAME = 'float-up-cache-v1.2';
+
   // Create a cache of the main pages for the game.
   // Things to run when the service worker is first installed.
   // Creates a cache of the specified URLs
   self.addEventListener('install', function(event) {
-    var CACHE_NAME = 'float-up-cache-v1.1';
       var urlsToCache = [
         'index.html',
         'main.js',
@@ -25,7 +26,7 @@
   // Loop through caches that aren't on the whitelisted and delete them.
   // Uses the names from the global cache list variable.
   self.addEventListener('activate', function(event) {
-    var cacheWhitelist = ['float-up-cache-v1.1'];
+    var cacheWhitelist = [];
     event.waitUntil(
       caches.keys().then(function(cacheNames) {
         return Promise.all(
@@ -43,7 +44,6 @@
 
 
   self.addEventListener('fetch', function(event) {
-    var CACHE_NAME = 'float-up-cache-v1.1';
     event.respondWith(
       caches.match(event.request)
         .then(function(response) {

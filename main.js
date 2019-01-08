@@ -411,7 +411,6 @@ const GameView = (function(){
         }
     }
 
-
     function draw(object) {
         switch (object.type) {
             case 'Balloon': return drawBalloon(object);
@@ -478,7 +477,6 @@ function drawBoundingBox(ctx, object) {
     );
 }
 
-
 function drawPlayerBoundingBox(ctx, object) {
     ctx.fillStyle = 'rgba(0, 255, 0, 0.1)'
     ctx.fillRect(
@@ -517,18 +515,18 @@ const STATE_FALL  = 202;
 
 class Game {
     constructor() {
-        this.GOM        = GameObjectManager
-        this.player     = new Player(SCREEN_MIDDLE + 10, SCREEN_MIDDLE + 10, 100, 150)
-        this.controller = GameController
-        this.controller.addControlEventListeners();
-        this.initDebugger()
-        this.score = 0;
+        this.GOM          = GameObjectManager
+        this.player       = new Player(SCREEN_MIDDLE + 10, SCREEN_MIDDLE + 10, 100, 150)
+        this.controller   = GameController
+        this.score        = 0;
         this.highestScore = 0;
-        this.state = STATE_ON;
+        this.state        = STATE_ON;
         this.fallAnim = {
             iter: 0,
             saved_background: ''
         }
+        this.controller.addControlEventListeners();
+        this.initDebugger()
     }
 
     initExample1() {
@@ -554,7 +552,7 @@ class Game {
             this._doFallingAnimation();
             return;
         }
-        this.controller.processInputsAndStep(this);
+        GameController.processInputsAndStep(this);
         this.player.step();
         GameObjectManager.forEach((balloon)=>{
             balloon.step();
@@ -592,6 +590,7 @@ class Game {
         this.fallAnim.iter = 0;
         this.player.anim = ANIM_JUMP;
         this.fallAnim.saved_background = canvas.style.background;
+        GameController.resetAllRequests();
     }
 
     _doFallingAnimation() {

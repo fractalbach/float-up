@@ -7,12 +7,15 @@ const q = document.querySelector.bind(document);
 // numerical constants used throughout the game.
 const GAME_WIDTH  = 1000;
 const GAME_HEIGHT = 1000;
+const SCREEN_MIDDLE = 400;
 const FEEDBACK_BUFFER = 20;
 const MAX_BALLOON_LIFE = 240;
 const MAX_PLAYER_SPEED = 8;
 
+const BALLOON_RADIUS = 100;
+
 // global variables.
-let currentAltitude = 500;
+let currentAltitude = SCREEN_MIDDLE;
 
 // retrieve images.
 const IMG_BALLOON = q("#img_balloon");
@@ -180,7 +183,7 @@ class Player {
 
     grab(balloon) {
         // this.y = balloon.y;
-        console.log("grab!")
+        // console.log("grab!")
         this.anim = ANIM_GRAB;
         this.vy = 0;
         this.isFalling = false;
@@ -398,8 +401,8 @@ const GameView = (function(){
     // moves the screen upwards (increases altitude) when the Player
     // is more than halfway up the screen.
     function updateAltitude(player) {
-        if (player.y < 500) {
-            let n = (500 - player.y);
+        if (player.y < SCREEN_MIDDLE) {
+            let n = (SCREEN_MIDDLE - player.y);
             currentAltitude += n;
             player.y +=n;
             GameObjectManager.forEach(function(object){
@@ -486,6 +489,11 @@ function drawPlayerBoundingBox(ctx, object) {
     );
 }
 
+// helpful math
+function randbetween(min, max) {
+    return Math.random()*(max - min) + min
+}
+
 
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -499,6 +507,10 @@ function drawPlayerBoundingBox(ctx, object) {
 // The Main Function is called once all of the resources on the web page
 // are loaded, creates the Game Object, and then kicks off the Game Loop!
 
+// enums:
+const STATE_ON    = 201;
+const STATE_FALL  = 202;
+
 // __________________________________________________________________
 //      Game Object
 // ==================================================================
@@ -506,28 +518,42 @@ function drawPlayerBoundingBox(ctx, object) {
 class Game {
     constructor() {
         this.GOM        = GameObjectManager
-        this.player     = new Player(500, 500, 100, 150)
+        this.player     = new Player(SCREEN_MIDDLE + 10, SCREEN_MIDDLE + 10, 100, 150)
         this.controller = GameController
         this.controller.addControlEventListeners();
         this.initDebugger()
         this.score = 0;
         this.highestScore = 0;
+        this.state = STATE_ON;
+        this.fallAnim = {
+            iter: 0,
+            saved_background: ''
+        }
     }
 
     initExample1() {
-        let g = (n)=>70*n
-        let b = new Balloon(g(3), g(8), g(1))
-        this.GOM.add(b);
-        for (let i=0; i<20; i++) {
+        // create a convenient balloon that you can always reach.
+        this.GOM.add(new Balloon(
+            GAME_WIDTH / 2,
+            GAME_HEIGHT - 5*BALLOON_RADIUS,
+            BALLOON_RADIUS
+        ));
+        // make some random balloons
+        for (let i=0; i<10; i++) {
             this.GOM.add(new Balloon(
-                900*Math.random()-50,
-                850 - (i * 50),
-                g(1)
+                randbetween(0, GAME_WIDTH - BALLOON_RADIUS),
+                GAME_HEIGHT - 5*BALLOON_RADIUS - (i * 100),
+                BALLOON_RADIUS
             ));
         }
     }
 
     step() {
+        // TODO: better state changes.
+        if (this.state === STATE_FALL) {
+            this._doFallingAnimation();
+            return;
+        }
         this.controller.processInputsAndStep(this);
         this.player.step();
         GameObjectManager.forEach((balloon)=>{
@@ -545,18 +571,52 @@ class Game {
                 return;
             }
         })
-        // update altitudes. (gives upward motion to game view)
         GameView.updateAltitude(this.player);
-        // update score.
+        // update game score and check for losing state.
         if (this.score > this.highestScore) {
             this.highestScore = this.score;
         }
         if (this.player.y >= GAME_HEIGHT - this.player.h) {
             this.score = 0;
-            currentAltitude = 500;
+            if (currentAltitude > SCREEN_MIDDLE + 1) {
+                this._startFallAnimation();
+            }
+            currentAltitude = SCREEN_MIDDLE;
         } else {
-            this.score = Math.floor((currentAltitude - 500) / 100)
+            this.score = Math.floor((currentAltitude - SCREEN_MIDDLE) / 100)
         }
+    }
+
+    _startFallAnimation() {
+        this.state = STATE_FALL;
+        this.fallAnim.iter = 0;
+        this.player.anim = ANIM_JUMP;
+        this.fallAnim.saved_background = canvas.style.background;
+    }
+
+    _doFallingAnimation() {
+        this.fallAnim.iter++;
+        let x = 255 - 3*this.fallAnim.iter;
+        if (x > 0) {
+            canvas.style.background = `rgb(${x},${x},${x})`;
+        } else {
+            canvas.style.background = `rgb(0,0,0)`;
+        }
+        GameObjectManager.forEach((balloon)=>{
+            balloon.y -= this.fallAnim.iter;
+            if (balloon.y < 0) {
+                GameObjectManager.remove(balloon.id);
+            }
+        });
+        if (this.fallAnim.iter > 100  && GameObjectManager.size() <= 0) {
+            this._endFallAnimation();
+        }
+    }
+
+    _endFallAnimation() {
+        this.state = STATE_ON;
+        this.initExample1();
+        canvas.style.background = this.fallAnim.saved_background;
     }
 
     clearScreen() {
@@ -595,12 +655,18 @@ class Game {
 
     updateDebugger() {
         Debugger.set('hig', this.highestScore);
-        Debugger.set('alt', currentAltitude - 500);
+        Debugger.set('alt', currentAltitude - SCREEN_MIDDLE);
         Debugger.set('sco', this.score);
     }
 
     makeRandBalloonAtTopOfScreen() {
-        this.GOM.add(new Balloon((Math.random()*(900-100)+100), -210, 70));
+        let maxX = 900;
+        let minX = 2*BALLOON_RADIUS;
+        this.GOM.add(new Balloon(
+            (Math.random()*(maxX - minX) + minX),
+            -3*BALLOON_RADIUS,
+            BALLOON_RADIUS
+        ));
     }
 
 }
@@ -621,9 +687,9 @@ function main() {
     //      Game Loop
     // ==================================================================
     function loop() {
-        game.clearScreen()
+        game.clearScreen();
         game.step();
-        game.drawScreen()
+        game.drawScreen();
         game.updateDebugger();
         window.requestAnimationFrame(loop);
     }

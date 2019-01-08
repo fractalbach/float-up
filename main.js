@@ -3,15 +3,16 @@ var GAME;
 
 // main elements and constants
 const q = document.querySelector.bind(document);
-const canvas = q("#game");
-const ctx = canvas.getContext("2d");
+
+// numerical constants used throughout the game.
 const GAME_WIDTH  = 1000;
 const GAME_HEIGHT = 1000;
+const FEEDBACK_BUFFER = 20;
+const MAX_BALLOON_LIFE = 240;
 const MAX_PLAYER_SPEED = 8;
 
-// canvas context settings init.
-ctx.lineWidth = 8;
-ctx.lineCap = 'round';
+// global variables.
+let currentAltitude = 500;
 
 // retrieve images.
 const IMG_BALLOON = q("#img_balloon");
@@ -36,31 +37,17 @@ const ANIMS = new Map([
 ]);
 
 
-// global variables.
-// middle of the screen.
-let currentAltitude = 500;
-
-
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //                              Chapter 1
 //
-//                            The Game Model
+//                      The Balloon and the Player
 //
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// The Game Model is part of the MVC (Model-View-Controller) architecture
-// pattern. It is the "logic" part of the game. It lives in a world that
-// is independent from what is visual on the screen.
-//
-//    In reality, the objects within have draw() functions in their model,
-// even though this breaks the rule above. This is because it's written in
-// javascript, but when ported to another language, these could be supplied
-// as "abstract functions" to be determined later in the View part.
-//
-
 
 // __________________________________________________________________
 //      Balloon
 // ==================================================================
+
 /**
  * balloon object is a single balloon and its attributes.
  * There will be many instances of these, and many will be created
@@ -80,6 +67,41 @@ class Balloon {
         this.r = r;
         this.altitude = y;
         this.id = 0;
+        this.has_been_touched = false;
+        this.has_popped = false;
+        this.rising_speed = 5;
+        this.max_altitude = this.altitude + MAX_BALLOON_LIFE * this.rising_speed;
+    }
+
+    step() {
+        if (this.has_been_touched === true) {
+            if (this.altitude >= this.max_altitude) {
+                this._pop();
+            } else {
+                this._rise();
+            }
+        }
+    }
+
+    _rise() {
+        this.y -= this.rising_speed;
+        this.altitude += this.rising_speed;
+    }
+
+    _pop() {
+        this.has_popped = true;
+    }
+
+    touch() {
+        this.has_been_touched = true;
+    }
+
+    isRising() {
+        return this.has_been_touched;
+    }
+
+    hasPopped() {
+        return this.has_popped;
     }
 
     // TODO: rename "string" in "BalloonString" to "rope" or "twine".
@@ -113,6 +135,8 @@ class Balloon {
 // __________________________________________________________________
 //      Player
 // ==================================================================
+
+
 /**
  * player is the class object of the main player.
  * There should only be 1 instance of player: You.
@@ -162,6 +186,7 @@ class Player {
         this.isFalling = false;
         this.isGrabbing = true;
         this.myBalloon = balloon;
+        balloon.touch();
     }
 
     moveLeft() {
@@ -192,8 +217,14 @@ class Player {
     step() {
         // this.doFriction();
         if (this.isGrabbing === true) {
-            if (GameObjectManager.hasCollision(this, this.myBalloon)) {
-                return;
+            // check to see if the balloon has popped.
+            if (this.myBalloon.hasPopped() === false) {
+                // rise with the balloon
+                this.y -= this.myBalloon.rising_speed;
+                // check if you are still holding onto the balloon
+                if (GameObjectManager.hasCollision(this, this.myBalloon)) {
+                    return;
+                }
             }
             // uh oh, you've lost your balloon!
             this.myBalloon = undefined;
@@ -255,7 +286,7 @@ class Player {
 // TODO: use a self-balancing binary search tree instead of sorted list.
 // TODO: make sure that tree is able to re-sort itself once objects move.
 
-GameObjectManager = (function(){
+const GameObjectManager = (function(){
 
     let nextid = 333;
     let objects = new Map();
@@ -351,6 +382,14 @@ GameObjectManager = (function(){
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // The Game View is in regards to how the game itself is displayed.  This
 // is where special drawing functions are declared.
+
+
+// canvas context settings.
+const canvas = q("#game");
+const ctx = canvas.getContext("2d");
+ctx.lineWidth = 8;
+ctx.lineCap = 'round';
+
 
 const GameView = (function(){
 
@@ -475,17 +514,40 @@ class Game {
         this.highestScore = 0;
     }
 
+    initExample1() {
+        let g = (n)=>70*n
+        let b = new Balloon(g(3), g(8), g(1))
+        this.GOM.add(b);
+        for (let i=0; i<20; i++) {
+            this.GOM.add(new Balloon(
+                900*Math.random()-50,
+                850 - (i * 50),
+                g(1)
+            ));
+        }
+    }
+
     step() {
         this.controller.processInputsAndStep(this);
         this.player.step();
-        GameView.updateAltitude(this.player);
-        GameObjectManager.forEach((object)=>{
-            if (object.y > GAME_HEIGHT) {
-                GameObjectManager.remove(object.id);
+        GameObjectManager.forEach((balloon)=>{
+            balloon.step();
+            // delete objects that have gone below the screen.
+            if (balloon.y > GAME_HEIGHT) {
+                GameObjectManager.remove(balloon.id);
                 this.makeRandBalloonAtTopOfScreen();
+                return;
+            }
+            // delete balloons that have already poppped
+            if (balloon.hasPopped() === true) {
+                GameObjectManager.remove(balloon.id);
+                this.makeRandBalloonAtTopOfScreen();
+                return;
             }
         })
-        // updateScore
+        // update altitudes. (gives upward motion to game view)
+        GameView.updateAltitude(this.player);
+        // update score.
         if (this.score > this.highestScore) {
             this.highestScore = this.score;
         }
@@ -541,18 +603,6 @@ class Game {
         this.GOM.add(new Balloon((Math.random()*(900-100)+100), -210, 70));
     }
 
-    initExample1() {
-        let g = (n)=>70*n
-        let b = new Balloon(g(3), g(8), g(1))
-        this.GOM.add(b);
-        for (let i=0; i<20; i++) {
-            this.GOM.add(new Balloon(
-                900*Math.random()-50,
-                850 - (i * 50),
-                g(1)
-            ));
-        }
-    }
 }
 
 

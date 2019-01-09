@@ -109,19 +109,6 @@
     <script src="debugger.js"></script>
     <script src="betterControls.js"></script>
     <script src="main.js"></script>
-
-    <script>
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', function() {
-          navigator.serviceWorker.register('sw2.js').then(function(registration) {
-            console.log('ServiceWorker registration successful with scope: ', registration.scope);
-          }, function(err) {
-            console.log('ServiceWorker registration failed: ', err);
-          });
-        });
-    }
-    </script>
-
     <script async src="https://www.googletagmanager.com/gtag/js?id=UA-131925744-1"></script>
     <script>
       window.dataLayer = window.dataLayer || [];

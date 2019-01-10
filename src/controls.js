@@ -104,7 +104,8 @@ function unitVector(a,b) {
 // ==================================================================
 
 // add event listeners to trigger the input manager.
-window.addEventListener("keydown", function(event) {
+
+function whenKeyGoesDown(event) {
     switch (event.code) {
         case 'ArrowUp':     REQUEST_UP = true; return;
         case 'ArrowDown':   REQUEST_DOWN = true; return;
@@ -112,17 +113,17 @@ window.addEventListener("keydown", function(event) {
         case 'ArrowRight':  REQUEST_RIGHT = true; return;
         case 'Space':       REQUEST_ACTION = true;  return; // might need cooldown.
     }
-});
+}
 
-window.addEventListener("keyup", function(event) {
+
+function whenKeyGoesUp(event) {
     switch (event.code) {
         case 'ArrowUp':     REQUEST_UP = false; return;
         case 'ArrowDown':   REQUEST_DOWN = false; return;
         case 'ArrowLeft':   REQUEST_LEFT = false; return;
         case 'ArrowRight':  REQUEST_RIGHT = false; return;
     }
-});
-
+}
 
 
 
@@ -273,6 +274,8 @@ function addControlEventListeners() {
 }
 
 function init(player) {
+    document.addEventListener("keyup", whenKeyGoesUp);
+    document.addEventListener("keydown", whenKeyGoesDown);
     addClickEventListener(player);
     // addControlEventListeners();
 }

@@ -1,10 +1,10 @@
 {
     "dir": "ltr",
     "lang": "ro",
-    "name": "FloatUp",
+    "name": "Balloon Grab",
     "display": "standalone",
     "start_url": ".",
-    "short_name": "FloatUp",
+    "short_name": "BalloonGrab",
     "theme_color": "#238ad0",
     "description": "Grab the balloons to get as high as you can!  Currently a prototype still in development.",
     "orientation": "any",

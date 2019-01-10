@@ -11,6 +11,8 @@ const SCREEN_MIDDLE = 400;
 const FEEDBACK_BUFFER = 20;
 const MAX_BALLOON_LIFE = 240;
 const MAX_PLAYER_SPEED = 8;
+const TERMINAL_VELOCITY = 10;  // can't fall faster than TERMINAL_VELOCITY.
+const GRAVITY_VELOCITY = 0.5;  // yes, in this game, gravity is a velocity.
 
 const BALLOON_RADIUS = 100;
 
@@ -234,12 +236,16 @@ class Player {
             this.isGrabbing = false;
         }
         if ((this.y + this.vy) > (GAME_HEIGHT - this.h)) {
+            // hurray! you aren't falling.
             this.y = GAME_HEIGHT - this.h + 1
             this.vy = 0;
             this.isFalling = false;
             this.anim = ANIM_STAND;
         } else {
-            this.vy += 1
+            // you are falling!
+            if (this.vy < TERMINAL_VELOCITY) {
+                this.vy += GRAVITY_VELOCITY
+            }
         }
         this.y += this.vy;
         // this.doXmovement();
@@ -648,13 +654,13 @@ class Game {
 
     initDebugger() {
         Debugger.add('hig', 'Highest Score');
-        Debugger.add('alt', 'Altitude');
+        // Debugger.add('alt', 'Altitude');
         Debugger.add('sco', 'Score');
     }
 
     updateDebugger() {
         Debugger.set('hig', this.highestScore);
-        Debugger.set('alt', currentAltitude - SCREEN_MIDDLE);
+        // Debugger.set('alt', currentAltitude - SCREEN_MIDDLE);
         Debugger.set('sco', this.score);
     }
 

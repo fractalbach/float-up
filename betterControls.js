@@ -255,7 +255,7 @@ function addClickEventListener(player) {
         requestDirectionalMove(uvx, uvy);
         REQUEST_ACTION = true;
     };
-    overlay.addEventListener('click', whenClicked, true);
+    overlay.addEventListener('click', whenClicked);
 }
 
 

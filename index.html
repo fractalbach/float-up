@@ -6,14 +6,13 @@
         <title>FloatUp</title>
         <meta name="author" content="Achenbach">
         <meta name="description" content="Grab the balloons to get as high as you can!  Currently a prototype still in development.">
-        <meta name='revised' content='Thursday, January 3, 2019'>
-        <meta name='date' content='Sep. 27, 2010'>
+        <meta name="image" content="https://fractalbach.github.io/float-up/icons/a_512_512.png">
 
         <meta name="og:title" content="FloatUp"/>
         <meta name="og:description" content="Grab the balloons to get as high as you can!  Currently a prototype still in development."/>
         <meta name="og:type" content="game"/>
         <meta name="og:url" content="https://fractalbach.github.io/float-up/"/>
-        <meta name="og:image" content="https://github.com/fractalbach/float-up/blob/master/icons/a_512_512.png"/>
+        <meta name="og:image" content="https://fractalbach.github.io/float-up/icons/a_512_512.png"/>
 
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -24,25 +23,31 @@
         <link rel="shortcut icon" href="icons/a_48_48.png">
 
         <meta name="google-site-verification" content="MUSZmmd_3_NpCYG_DrBkwFBNNG5G4ClaIcEMNyI7hn4" />
-
     </head>
-  <body>
-      <canvas id="game" width="1000" height="1000"></canvas>
-    <!-- <canvas id="player" width="100" height="200"></canvas> -->
-    <div style="display: none;">
-      <img id="img_balloon" src="img/clear/balloon.png">
-      <img id="img_grab" src="img/clear/grab.png">
-      <img id="img_jump" src="img/clear/jump.png">
-      <img id="img_stand" src="img/clear/stand.png">
-    </div>
 
-    <table id="debugger">
-        <tr><th colspan="2">Score</th></tr>
-    </table>
-    <canvas id="overlay" width="1000" height="1000"></div>
+
+    <body>
+
+      <canvas id="game" width="1000" height="1000"></canvas>
+
+        <div style="display: none;">
+          <img id="img_balloon" src="img/clear/balloon.png">
+          <img id="img_grab" src="img/clear/grab.png">
+          <img id="img_jump" src="img/clear/jump.png">
+          <img id="img_stand" src="img/clear/stand.png">
+        </div>
+
+        <table id="debugger">
+            <tr><th colspan="2">Score</th></tr>
+        </table>
+
+        <div id="wrapfunmsg" class="fader"><div id="funmsg">Feather Mode Activated!</div></div>
+
+        <canvas id="overlay" width="1000" height="1000"></div>
 
     <style>
-    html, body, #game, #overlay {
+
+    html, body, #game, #overlay, .fullfixed {
         position: fixed;
         left: 0;
         right: 0;
@@ -102,6 +107,41 @@
     }
     .green {
         background: lightgreen;
+    }
+
+
+    /* For displaying fun messages in the center of the screen */
+    #wrapfunmsg {
+        position: fixed;
+        left: 0;
+        right: 0;
+        top: calc(10%);
+        opacity: 0;
+    }
+    #funmsg {
+        position: relative;
+        margin: auto;
+        width: 25%;
+        font-size: 2em;
+        text-align: center;
+        font-family: fantasy;
+        background: rgba(20,20,20, 0.4);
+        border-radius: 1em;
+        color: white;
+        text-shadow:
+       3px 3px 0 #000,
+     -1px -1px 0 #000,
+      1px -1px 0 #000,
+      -1px 1px 0 #000,
+       1px 1px 0 #000;
+    }
+    @keyframes fadeout {
+        from {opacity: 1;}
+        to {opacity: 0;}
+    }
+    .fader {
+        animation-duration: 5s;
+        animation-name: fadeout;
     }
     </style>
 

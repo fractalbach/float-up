@@ -525,7 +525,7 @@ class Game {
             iter: 0,
             saved_background: ''
         }
-        this.controller.addControlEventListeners();
+        this.controller.init(this.player);
         this.initDebugger()
     }
 
@@ -667,7 +667,6 @@ class Game {
             BALLOON_RADIUS
         ));
     }
-
 }
 
 

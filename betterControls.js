@@ -193,7 +193,6 @@ function whenTouchCancels(event) {
     REQUEST_MOVE = false
 }
 
-
 // __________________________________________________________________
 //      Drawing on the Controller's Overlay
 // ==================================================================
@@ -242,6 +241,26 @@ function clearOverlay() {
 
 
 // __________________________________________________________________
+//      Click/Tap to jump in that direction
+// ==================================================================
+
+function addClickEventListener(player) {
+    function whenClicked(event) {
+        let rec = q('#game').getBoundingClientRect();
+        let playerX = rec.x + (player.x + player.w/2)*rec.width/1000;
+        let playerY = rec.y + (player.y + player.h/2)*rec.height/1000;
+        let dx = event.clientX - playerX;
+        let dy = event.clientY - playerY;
+        let [uvx, uvy] = unitVector(dx, dy);
+        requestDirectionalMove(uvx, uvy);
+        REQUEST_ACTION = true;
+    };
+    overlay.addEventListener('click', whenClicked, true);
+}
+
+
+
+// __________________________________________________________________
 //      GameController Public Interfaces
 // ==================================================================
 
@@ -253,9 +272,14 @@ function addControlEventListeners() {
     overlay.addEventListener("touchcancel", whenTouchCancels);
 }
 
+function init(player) {
+    addClickEventListener(player);
+    // addControlEventListeners();
+}
+
 return {
+    init,
     processInputsAndStep,
-    addControlEventListeners,
     drawOverlay,
     clearOverlay,
     touchTime,

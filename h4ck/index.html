@@ -1,0 +1,181 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <title>Balloon Grab - H4CK3D edition</title>
+        <meta name="og:title" content="Balloon Grab - H4CK3D edition"/>
+
+        <meta name="description" content="h4cked branch of the Balloon Grab game. The balloons have gone ROGUE.">
+        <meta name="og:description" content="h4cked branch of the Balloon Grab game. The balloons have gone ROGUE."/>
+
+        <meta name="image" content="https://fractalbach.github.io/float-up/icons/a_512_512.png">
+        <meta name="og:image" content="https://fractalbach.github.io/float-up/icons/a_512_512.png"/>
+
+        <meta name="og:type" content="game"/>
+        <meta name="og:url" content="https://fractalbach.github.io/float-up/"/>
+
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+        <link rel="shortcut icon" href="https://fractalbach.github.io/float-up/icons/a_48_48.png">
+
+        <meta name="google-site-verification" content="MUSZmmd_3_NpCYG_DrBkwFBNNG5G4ClaIcEMNyI7hn4" />
+    </head>
+
+
+    <body>
+
+      <canvas id="game" width="1000" height="1000"></canvas>
+
+        <div style="display: none;">
+          <img id="img_balloon" src="img/balloon.png">
+          <img id="img_grab" src="img/grab.png">
+          <img id="img_jump" src="img/jump.png">
+          <img id="img_stand" src="img/stand.png">
+        </div>
+
+        <table id="debugger">
+            <tr><th colspan="2">Score</th></tr>
+        </table>
+
+        <div id="wrapfunmsg" class="fader"><div id="funmsg">THE <span id="h4ck3d">H4CK3d BRANCH</span> Edition! <br> <span id="ballons_of_death">BALLOONS OF DEATH</span> <br><br> Tap empty areas to sneak past the balloons. <br> Don't stop tapping!</div></div>
+
+        <canvas id="overlay" width="1000" height="1000"></canvas>
+    <style>
+
+    html, body, #game, #overlay, .fullfixed {
+        position: fixed;
+        left: 0;
+        right: 0;
+        top: 0;
+        bottom: 0;
+    }
+    html, body {
+        /* background: #002; */
+        /* background: #CCE; */
+        /* background: #238ad0; */
+        background: #000000;
+        background: -moz-radial-gradient(center, ellipse cover, #000000 2%, #000000 2%, #ff0509 22%, #000000 79%);
+        background: -webkit-radial-gradient(center, ellipse cover, #000000 2%,#000000 2%,#ff0509 22%,#000000 79%);
+        background: radial-gradient(ellipse at center, #000000 2%,#000000 2%,#ff0509 22%,#000000 79%);
+        margin: 0;
+        padding: 0;
+    }
+    #game {
+        /* background: #CCE; */
+        background: white;
+        margin: auto;
+        /* border: 1px solid white; */
+    }
+    @media (orientation: landscape) {
+        #game {
+            width: calc(100vh);
+            height: calc(100vh);
+        }
+    }
+    @media (orientation: portrait) {
+        #game {
+            width: calc(100vw);
+            height: calc(100vw);
+        }
+    }
+
+    /* For debugging */
+    #debugger {
+        user-select: none;
+        pointer-events: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+    }
+    table, tr, td {
+        border: thin solid black;
+    }
+    table {
+        opacity: 0.8;
+        background: black;
+        /* font-family: monospace; */
+        font-family: fantasy;
+    }
+    th {
+        color: white;
+    }
+    td {
+        min-width: 3em;
+        background: white;
+    }
+    .red {
+        background: lightpink;
+    }
+    .green {
+        background: lightgreen;
+    }
+
+
+    /* For displaying fun messages in the center of the screen */
+    #h4ck3d {
+        font-family: monospace;
+        color: lightgreen;
+    }
+    #ballons_of_death {
+        color: #F99;
+    }
+    #wrapfunmsg {
+        position: fixed;
+        left: 0;
+        right: 0;
+        /* top: calc(10%); */
+        top: 0;
+        bottom: 0;
+        opacity: 0;
+        user-select: none;
+        pointer-events: none;
+
+        display: flex;
+        align-items: center;
+    }
+    #funmsg {
+        position: relative;
+        margin: auto;
+        font-size: 2em;
+        text-align: center;
+        font-family: sans-serif;
+        background: rgba(20,20,20, 0.5);
+        border-radius: 1em;
+        color: white;
+        text-shadow:
+         -1px -1px 0 #000,
+          1px -1px 0 #000,
+          -1px 1px 0 #000,
+           1px 1px 0 #000;
+    }
+    @keyframes fadeout {
+        0% {
+            opacity: 0.8;
+        }
+        100% {
+            opacity: 0;
+            display: none;
+        }
+    }
+    .fader {
+        animation-duration: 6s;
+        animation-name: fadeout;
+    }
+    </style>
+
+    <!-- <script src="controls.js"></script> -->
+    <script src="src/debugger.js"></script>
+    <script src="src/controls.js"></script>
+    <script src="src/main.js"></script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-131925744-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'UA-131925744-1');
+    </script>
+
+  </body>
+</html>

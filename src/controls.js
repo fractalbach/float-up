@@ -198,6 +198,18 @@ function whenTouchCancels(event) {
 //      Drawing on the Controller's Overlay
 // ==================================================================
 
+function drawCircle(ctx, x, y, r) {
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, 2*Math.PI);
+    ctx.fill();
+}
+
+function drawCircleOutline(ctx, x, y, r) {
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, 2*Math.PI);
+    ctx.stroke();
+}
+
 function drawJoyBase(ctx, x, y) {
     ctx.fillStyle = 'rgba(255, 100, 100, 0.5)';
     drawCircle(ctx, x, y, 20);
@@ -209,6 +221,78 @@ function drawJoyStick(ctx, x0, y0, xf, yf) {
     ctx.fillStyle = 'black';
     drawCircle(ctx, xf, yf, 10);
 }
+
+
+// __________________________________________________________________
+//      Drawing Click/Tap Locations on the screeen.
+// ==================================================================
+
+const ClickSpotTracker = (function(){
+
+    // private data members of ClickSpotTracker
+    const NUM_CIRCLES_TO_TRACK = 10;
+    const DEFAULT_CIRCLE_RADIUS = 50;
+    let listOfCircles = new Array(NUM_CIRCLES_TO_TRACK);
+    let head = 0;
+    let ctx = overlayContext;
+
+    // ClickSpotCircle is a single visible circle that appears when you
+    // interact with the screen.  It will diminish over time until it's radius
+    // is less than 0.  It can be reset after another click.
+    class ClickSpotCircle {
+        constructor(x,y) {
+            this.x = x;
+            this.y = y;
+            this.r = DEFAULT_CIRCLE_RADIUS;
+        }
+        draw() {
+            ctx.fillStyle = 'rgba(77, 184, 255, 0.3)';
+            drawCircle(ctx, this.x, this.y, this.r);
+        }
+        isFullyDiminished() {
+            return this.r < 0;
+        }
+        diminish() {
+            this.r--;
+        }
+        resetLocation(x, y) {
+            this.x = x;
+            this.y = y;
+            this.r = DEFAULT_CIRCLE_RADIUS;
+        }
+    }
+
+    // initialize list of Circles
+    for (let i = 0; i < NUM_CIRCLES_TO_TRACK; i++) {
+        listOfCircles[i] = new ClickSpotCircle();
+    }
+
+    // public function that sets a new draw location.
+    function addClickLocation(x, y) {
+        head++;
+        if (head > NUM_CIRCLES_TO_TRACK - 1) {
+            head = 0;
+        }
+        listOfCircles[head].resetLocation(x, y);
+    }
+
+    // public function that is called every frame to draw the circles
+    // onto the screen in their current state.
+    function drawAll() {
+        for (let x of listOfCircles) {
+            if (x.isFullyDiminished() === false) {
+                x.draw();
+                x.diminish();
+            }
+        }
+    }
+
+    return {
+        addClickLocation,
+        drawAll,
+    }
+
+}());
 
 // used for overlay because you need to compute the current width/height.
 function clearCanvasComputed(canvas, ctx) {
@@ -223,6 +307,8 @@ function clearCanvasComputed(canvas, ctx) {
  * call this function from the main game loop when drawing other things.
  */
 function drawOverlay() {
+    // draw the click spots if they exist.
+    ClickSpotTracker.drawAll();
     // draw joystick on the screen if neccessary.
     if (firstTouch !== undefined) {
         let x = firstTouch.clientX;
@@ -236,7 +322,7 @@ function drawOverlay() {
  * Clears the overlay canvas entirely.  Call this at beginning of game loop.
  */
 function clearOverlay() {
-    clearCanvasComputed(overlay, overlayContext)
+    overlayContext.clearRect(0, 0, 1000, 1000)
 }
 
 
@@ -255,6 +341,11 @@ function addClickEventListener(player) {
         let [uvx, uvy] = unitVector(dx, dy);
         requestDirectionalMove(uvx, uvy);
         REQUEST_ACTION = true;
+        // draw click locations on the screen:
+        rec = overlay.getBoundingClientRect();
+        let x = event.clientX * 1000 / rec.width
+        let y = event.clientY * 1000 / rec.height
+        ClickSpotTracker.addClickLocation(x, y);
     };
     overlay.addEventListener('click', whenClicked);
 }

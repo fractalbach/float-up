@@ -117,9 +117,9 @@ class Balloon {
 
     // Bounds for the BalloonString.
     stringX() {return this.x - 0.5*this.r/2;}
-    stringY() {return this.y + 2.5*this.r;}
+    stringY() {return this.y + 2*this.r;}
     stringW() {return this.r/2;}
-    stringH() {return this.r/2;}
+    stringH() {return this.r;}
 
     // Currently detecting collisions with the string, which is what is
     // needed right now.
@@ -624,12 +624,8 @@ class Game {
         canvas.style.background = this.fallAnim.saved_background;
     }
 
-    clearScreen() {
-        clearCanvas(ctx);
-        this.controller.clearOverlay();
-    }
-
     drawScreen() {
+        GameController.drawOverlay();
         // draw the player.
         GameView.drawPlayer(this.player);
         drawPlayerBoundingBox(ctx, this.player);
@@ -638,6 +634,11 @@ class Game {
             GameView.draw(object);
             drawBoundingBox(ctx, object);
         });
+    }
+
+    clearScreen() {
+        GameController.clearOverlay();
+        clearCanvas(ctx);
     }
 
     determinePlayerAction() {

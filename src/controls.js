@@ -12,12 +12,17 @@ const GameController = (function(){
 
 // the canvas overlay where the controls are interacted with.
 const q = document.querySelector.bind(document);
+const canvas = q("#game");
 const overlay = q("#overlay");
-const overlayContext = overlay.getContext("2d");
+const ctx = canvas.getContext("2d");
+
+// TODO:
+// define this in a better way.
+// currently, it's left undefined until GameController.init(player) is called.
+let myPlayer = undefined;
 
 // constant values
 const TAP_DELAY = 250;
-
 
 // specific requests
 let REQUEST_UP     = false
@@ -135,6 +140,7 @@ let touchTimeStart = 0;
 let touchTime = 0;
 let isTouching = 0;
 let firstTouch;
+let lastTouch;
 
 function restartTimer() {
     touchTimeStart = performance.now();
@@ -152,8 +158,9 @@ function debugUnitVectors(uvx, uvy) {
 }
 
 function calculateDirectionAndRequest(event) {
-    let dx = event.touches[0].clientX - firstTouch.clientX;
-    let dy = event.touches[0].clientY - firstTouch.clientY;
+    let [x,y] = getMousePos(canvas, event.touches[0])
+    let dx = x - (myPlayer.x + myPlayer.w/2)
+    let dy = y - (myPlayer.y + myPlayer.h/2)
     let uv = unitVector(dx, dy);
     let uvx = uv[0]
     let uvy = uv[1]
@@ -165,27 +172,41 @@ function calculateDirectionAndRequest(event) {
 //      Touch Controls  ~  Events
 // ==================================================================
 
+function displayTouch(touchEvent) {
+    for (let touch of touchEvent.touches) {
+        let [x, y] = getMousePos(canvas, touch)
+        ClickSpotTracker.addClickLocation(x, y);
+    }
+}
+
 function whenTouchStarts(event) {
+    event.preventDefault();
+    displayTouch(event)
     restartTimer();
     isTouching = 1;
-    firstTouch = event.touches[0];
+    lastTouch = firstTouch = event.touches[0];
+    whenClicked(lastTouch);
 }
 
 function whenTouchMoves(event) {
     event.preventDefault();
+    displayTouch(event)
     updateTouchTime();
     calculateDirectionAndRequest(event);
+    lastTouch = event.touches[0];
 }
 
 function whenTouchEnds(event) {
     touchTime = performance.now() - touchTimeStart;
     if (touchTime < TAP_DELAY) {
-        REQUEST_ACTION = true;
-        return;
+
+        // return;
     }
+    whenClicked(lastTouch)
     isTouching = 0;
     firstTouch = undefined;
     REQUEST_MOVE = false
+    // whenClicked(lastTouch);
 }
 
 function whenTouchCancels(event) {
@@ -230,23 +251,23 @@ function drawJoyStick(ctx, x0, y0, xf, yf) {
 const ClickSpotTracker = (function(){
 
     // private data members of ClickSpotTracker
-    const NUM_CIRCLES_TO_TRACK = 10;
+    const NUM_CIRCLES_TO_TRACK = 20;
     const DEFAULT_CIRCLE_RADIUS = 50;
+    const CIRCLE_COLOR = 'rgba(77, 184, 255, 0.2)';
     let listOfCircles = new Array(NUM_CIRCLES_TO_TRACK);
     let head = 0;
-    let ctx = overlayContext;
 
     // ClickSpotCircle is a single visible circle that appears when you
     // interact with the screen.  It will diminish over time until it's radius
     // is less than 0.  It can be reset after another click.
     class ClickSpotCircle {
-        constructor(x,y) {
-            this.x = x;
-            this.y = y;
+        constructor() {
+            this.x = 0;
+            this.y = 0;
             this.r = DEFAULT_CIRCLE_RADIUS;
         }
         draw() {
-            ctx.fillStyle = 'rgba(77, 184, 255, 0.3)';
+            ctx.fillStyle = CIRCLE_COLOR;
             drawCircle(ctx, this.x, this.y, this.r);
         }
         isFullyDiminished() {
@@ -306,23 +327,23 @@ function clearCanvasComputed(canvas, ctx) {
  * drawOverlay handles all drawing events that occur on the controller overlay.
  * call this function from the main game loop when drawing other things.
  */
-function drawOverlay() {
+function draw() {
     // draw the click spots if they exist.
     ClickSpotTracker.drawAll();
     // draw joystick on the screen if neccessary.
-    if (firstTouch !== undefined) {
-        let x = firstTouch.clientX;
-        let y = firstTouch.clientY;
-        drawJoyBase(this.overlayContext, x, y);
-        drawJoyStick(this.overlayContext, x, y, (x + 15*directionX), (y + 15*directionY));
-    }
+    // if (firstTouch !== undefined) {
+    //     let x = firstTouch.clientX;
+    //     let y = firstTouch.clientY;
+    //     drawJoyBase(ctx, x, y);
+    //     drawJoyStick(ctx, x, y, (x + 15*directionX), (y + 15*directionY));
+    // }
 }
 
 /**
  * Clears the overlay canvas entirely.  Call this at beginning of game loop.
  */
-function clearOverlay() {
-    overlayContext.clearRect(0, 0, 1000, 1000)
+function clearOverlay(ctx) {
+    ctx.clearRect(0, 0, 1000, 1000)
 }
 
 
@@ -331,23 +352,32 @@ function clearOverlay() {
 //      Click/Tap to jump in that direction
 // ==================================================================
 
-function addClickEventListener(player) {
-    function whenClicked(event) {
-        let rec = q('#game').getBoundingClientRect();
-        let playerX = rec.x + (player.x + player.w/2)*rec.width/1000;
-        let playerY = rec.y + (player.y + player.h/2)*rec.height/1000;
-        let dx = event.clientX - playerX;
-        let dy = event.clientY - playerY;
-        let [uvx, uvy] = unitVector(dx, dy);
-        requestDirectionalMove(uvx, uvy);
-        REQUEST_ACTION = true;
-        // draw click locations on the screen:
-        rec = overlay.getBoundingClientRect();
-        let x = event.clientX * 1000 / rec.width
-        let y = event.clientY * 1000 / rec.height
-        ClickSpotTracker.addClickLocation(x, y);
-    };
-    overlay.addEventListener('click', whenClicked);
+// converts event.clientX and event.clientY to the correct position on the
+// canvas.  This is needed because the canvas is resized based on the
+// screen it is viewed on.  The canvas is not always 1000 x 1000 pixels,
+// despite the fact that the drawing functions behave like it is.
+function getMousePos(canvas, clickEvent) {
+    let rect = canvas.getBoundingClientRect();
+    let x = (clickEvent.clientX - rect.left) * 1000 / rect.width;
+    let y = (clickEvent.clientY - rect.top) * 1000 / rect.height;
+    // console.log(`(${clickEvent.clientX}, ${clickEvent.clientY}) -> (${x}, ${y})`)
+    return [x, y];
+}
+
+function whenClicked(event) {
+    let [x, y] = getMousePos(canvas, event);
+    let playerCenterX = (myPlayer.x + myPlayer.w/2);
+    let playerCenterY = (myPlayer.y + myPlayer.h/2);
+    let dx = x - playerCenterX;
+    let dy = y - playerCenterY;
+    let [uvx, uvy] = unitVector(dx, dy);
+    requestDirectionalMove(uvx, uvy);
+    REQUEST_ACTION = true;
+    ClickSpotTracker.addClickLocation(x, y);
+};
+
+function addClickEventListener(canvas, player) {
+    canvas.addEventListener('click', whenClicked);
 }
 
 
@@ -357,25 +387,25 @@ function addClickEventListener(player) {
 // ==================================================================
 
 // add the event listeners
-function addControlEventListeners() {
-    overlay.addEventListener("touchstart" , whenTouchStarts);
-    overlay.addEventListener("touchmove"  , whenTouchMoves);
-    overlay.addEventListener("touchend"   , whenTouchEnds);
-    overlay.addEventListener("touchcancel", whenTouchCancels);
+function addControlEventListeners(element) {
+    element.addEventListener("touchstart" , whenTouchStarts);
+    element.addEventListener("touchmove"  , whenTouchMoves);
+    element.addEventListener("touchend"   , whenTouchEnds);
+    element.addEventListener("touchcancel", whenTouchCancels);
 }
 
 function init(player) {
+    myPlayer = player;
     document.addEventListener("keyup", whenKeyGoesUp);
     document.addEventListener("keydown", whenKeyGoesDown);
-    addClickEventListener(player);
-    // addControlEventListeners();
+    addClickEventListener(canvas, player);
+    addControlEventListeners(canvas);
 }
 
 return {
     init,
     processInputsAndStep,
-    drawOverlay,
-    clearOverlay,
+    draw,
     touchTime,
     resetAllRequests,
 }

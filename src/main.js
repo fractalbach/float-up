@@ -625,7 +625,7 @@ class Game {
     }
 
     drawScreen() {
-        GameController.drawOverlay();
+        GameController.draw();
         // draw the player.
         GameView.drawPlayer(this.player);
         drawPlayerBoundingBox(ctx, this.player);
@@ -637,7 +637,7 @@ class Game {
     }
 
     clearScreen() {
-        GameController.clearOverlay();
+        // GameController.clearOverlay();
         clearCanvas(ctx);
     }
 

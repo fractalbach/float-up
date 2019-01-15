@@ -28,7 +28,7 @@
 
     <body>
 
-      <canvas id="game" width="1000" height="1000"></canvas>
+      <canvas id="game" class="square" width="1000" height="1000"></canvas>
 
         <div style="display: none;">
           <img id="img_balloon" src="img/clear/balloon.png">
@@ -43,11 +43,11 @@
 
         <!-- <div id="wrapfunmsg" class="fader"><div id="funmsg">Feather Mode Activated!</div></div> -->
 
-        <canvas id="overlay" width="1000" height="1000"></div>
+        <!-- <div id="overlay" class="square"></div> -->
 
     <style>
 
-    html, body, #game, #overlay, .fullfixed {
+    html, body, .square, .fullfixed {
         position: fixed;
         left: 0;
         right: 0;
@@ -61,23 +61,22 @@
         margin: 0;
         padding: 0;
     }
-    #overlay {
-        width: 100%;
+    .square {
+        margin: auto;
     }
     #game {
         /* background: #CCE; */
         background: white;
-        margin: auto;
         /* border: 1px solid white; */
     }
     @media (orientation: landscape) {
-        #game {
+        .square {
             width: calc(100vh);
             height: calc(100vh);
         }
     }
     @media (orientation: portrait) {
-        #game {
+        .square {
             width: calc(100vw);
             height: calc(100vw);
         }
@@ -88,6 +87,8 @@
         position: fixed;
         top: 0;
         left: 0;
+        user-select: none;
+        pointer-events: none;
     }
     table, tr, td {
         border: thin solid black;
@@ -132,11 +133,11 @@
         border-radius: 1em;
         color: white;
         text-shadow:
-       3px 3px 0 #000,
-     -1px -1px 0 #000,
-      1px -1px 0 #000,
-      -1px 1px 0 #000,
-       1px 1px 0 #000;
+            3px 3px 0 #000,
+            -1px -1px 0 #000,
+            1px -1px 0 #000,
+            -1px 1px 0 #000,
+            1px 1px 0 #000;
     }
     @keyframes fadeout {
         from {opacity: 1;}

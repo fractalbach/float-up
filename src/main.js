@@ -77,6 +77,7 @@ class Balloon {
         this.has_been_touched = false;
         this.has_popped = false;
         this.rising_speed = BALLOON_RISING;
+        this.min_altitude = this.altitude;
         this.max_altitude = this.altitude + MAX_BALLOON_LIFE * this.rising_speed;
     }
 
@@ -204,7 +205,7 @@ class Player {
     }
 
     moveRight() {
-        if (this.x < this.w + GAME_WIDTH) {
+        if (this.x < GAME_WIDTH - this.w) {
             this.x += MAX_PLAYER_SPEED;
         }
     }
@@ -417,7 +418,7 @@ const GameObjectManager = (function(){
 // canvas context settings.
 const canvas = q("#game");
 const ctx = canvas.getContext("2d");
-ctx.lineWidth = 8;
+// ctx.lineWidth = 5;
 ctx.lineCap = 'round';
 
 
@@ -454,10 +455,58 @@ const GameView = (function(){
 
 
     function drawBalloon(b) {
-        ctx.drawImage(IMG_BALLOON,
-            0, 0, 500, 1000,
-            (b.x - b.r), (b.y - b.r), (2*b.r), (4*b.r)
-        );
+        ctx.strokeStyle = 'black'
+
+        //string
+        ctx.beginPath();
+        ctx.moveTo(b.x, b.y + 3*b.r)
+        ctx.lineTo(b.x, b.y + b.r)
+        ctx.stroke();
+
+        // triangle thing
+        ctx.beginPath();
+        ctx.moveTo(b.x - 15, b.y + b.r)
+        ctx.lineTo(b.x + 15, b.y + b.r)
+        ctx.lineTo(b.x, b.y + b.r - 30)
+        ctx.lineTo(b.x - 15, b.y + b.r)
+        ctx.stroke();
+
+        // balloon itself
+
+        for (let i=0; i<2; i++) {
+            // left half of balloon
+            ctx.beginPath();
+            ctx.moveTo(b.x,  b.y + b.r - 30);
+            ctx.bezierCurveTo(
+                b.x - b.r/1.2,    b.y + b.r /3,   // control point 1
+                b.x - b.r/1.2,      b.y - b.r,   // control point 2
+                b.x,            b.y - b.r        // top of balloon
+            );
+
+            // right half of balloon
+            ctx.moveTo(b.x,  b.y + b.r - 30);
+            ctx.bezierCurveTo(
+                b.x + b.r/1.2,    b.y + b.r / 3,   // control point 1
+                b.x + b.r/1.2,      b.y - b.r,   // control point 2
+                b.x,            b.y - b.r        // top of balloon
+            );
+
+            if (i==0) {
+                // set fill color based on the remaining lifetime of the balloon.
+                let rat =  (b.altitude - b.min_altitude) / (b.max_altitude - b.min_altitude)
+                let v = 255 * rat;
+                ctx.fillStyle = `rgba(255, ${255 - v}, ${255 - v}, ${rat})`;
+                ctx.fill();
+            } else {
+                ctx.stroke();
+            }
+        }
+
+
+        // ctx.drawImage(IMG_BALLOON,
+        //     0, 0, 500, 1000,
+        //     (b.x - b.r), (b.y - b.r), (2*b.r), (4*b.r)
+        // );
     }
 
     return {
@@ -495,7 +544,7 @@ function clearCanvas(ctx) {
 // ==================================================================
 
 function drawBoundingBox(ctx, object) {
-    ctx.fillStyle = 'rgba(255, 0, 0, 0.1)'
+    ctx.fillStyle = 'rgba(0, 0, 255, 0.1)'
     ctx.fillRect(
         object.lowX(),
         object.lowY(),
@@ -647,13 +696,13 @@ class Game {
     drawScreen() {
         GameController.draw();
         // draw the player.
-        GameView.drawPlayer(this.player);
         drawPlayerBoundingBox(ctx, this.player);
         // draw each of the objects onto the screen.
         GameObjectManager.forEach(function(object){
             GameView.draw(object);
             drawBoundingBox(ctx, object);
         });
+        GameView.drawPlayer(this.player);
     }
 
     clearScreen() {
@@ -680,14 +729,16 @@ class Game {
         Debugger.set('sco', this.score);
     }
 
-    makeRandBalloonAtTopOfScreen() {
-        let maxX = 900;
-        let minX = 2*BALLOON_RADIUS;
+    makeRandBalloon(minX, maxX) {
         GameObjectManager.add(new Balloon(
             (Math.random()*(maxX - minX) + minX),
             -3*BALLOON_RADIUS,
             BALLOON_RADIUS
         ));
+    }
+
+    makeRandBalloonAtTopOfScreen() {
+        this.makeRandBalloon(0, 1000)
     }
 }
 

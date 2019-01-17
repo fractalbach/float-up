@@ -8,17 +8,21 @@ const q = document.querySelector.bind(document);
 const GAME_WIDTH        = 1000;
 const GAME_HEIGHT       = 1000;
 const SCREEN_MIDDLE     = 400;
+
 const MAX_PLAYER_SPEED  = 8;    // player's vx max
 const MAX_JUMP_SPEED    = 20;   // player's vy max
 const TERMINAL_VELOCITY = 10;   // can't fall faster than TERMINAL_VELOCITY.
 const GRAVITY_VELOCITY  = 0.5;  // yes, in this game, gravity is a velocity.
+
 const FEEDBACK_BUFFER   = 20;   // in # of frames
+const MIN_BALLOON_LIFE  = 30;  // in # of frames
 const MAX_BALLOON_LIFE  = 240;  // in # of frames
-const BALLOON_RADIUS    = 100;  // in pixels
-const BALLOON_RISING    = 5;    // how fast the ballon rises
+const BALLOON_RADIUS    = 100;  // pixels per frame
+const BALLOON_RISING    = 5;    // pixels per frame: how fast the ballon rises
 
 
-// global variables.
+// altitude keeps track of how high the player has gone through the game.
+// this is directly related to the score.
 let currentAltitude = SCREEN_MIDDLE;
 
 // retrieve images.
@@ -26,22 +30,27 @@ const IMG_BALLOON = q("#img_balloon");
 const IMG_STAND   = q("#img_stand");
 const IMG_GRAB    = q("#img_grab");
 const IMG_JUMP    = q("#img_jump");
+const IMG_POP     = q("#img_pop");
 
 // enums: animation
 const ANIM_STAND = 101;  // player is standing on a platform
 const ANIM_GRAB  = 102;  // player is holding a balloon
 const ANIM_JUMP  = 103;  // player is somewhere in the air
 
-/**
- * ANIMS maps a player's action to the image that will be drawn on the screen.
- * This is likely to expand during development as more animations are added.
- * @type {Map}
- */
+
+// ANIMS maps a player's action to the image that will be drawn on the screen.
+// This is likely to expand during development as more animations are added.
 const ANIMS = new Map([
     [ANIM_STAND, IMG_STAND],
     [ANIM_GRAB,  IMG_GRAB],
     [ANIM_JUMP,  IMG_JUMP],
 ]);
+
+
+// helpful math
+function randbetween(min, max) {
+    return Math.random()*(max - min) + min
+}
 
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -78,7 +87,7 @@ class Balloon {
         this.has_popped = false;
         this.rising_speed = BALLOON_RISING;
         this.min_altitude = this.altitude;
-        this.max_altitude = this.altitude + MAX_BALLOON_LIFE * this.rising_speed;
+        this.max_altitude = this.altitude + randbetween(MIN_BALLOON_LIFE, MAX_BALLOON_LIFE) * this.rising_speed;
     }
 
     step() {
@@ -457,45 +466,56 @@ const GameView = (function(){
     function drawBalloon(b) {
         ctx.strokeStyle = 'black'
 
-        //string
+        // draw the balloon's string
         ctx.beginPath();
         ctx.moveTo(b.x, b.y + 3*b.r)
         ctx.lineTo(b.x, b.y + b.r)
         ctx.stroke();
 
-        // triangle thing
+        // draw triangle thing that connects balloon to its string.
         ctx.beginPath();
-        ctx.moveTo(b.x - 15, b.y + b.r)
-        ctx.lineTo(b.x + 15, b.y + b.r)
-        ctx.lineTo(b.x, b.y + b.r - 30)
-        ctx.lineTo(b.x - 15, b.y + b.r)
+        ctx.moveTo(b.x - 15,   b.y + b.r)
+        ctx.lineTo(b.x + 15,   b.y + b.r)
+        ctx.lineTo(b.x,        b.y + b.r - 30)
+        ctx.lineTo(b.x - 15,   b.y + b.r)
         ctx.stroke();
 
-        // balloon itself
+        // determine how close the ballon is to it's pop altitude.
+        let rat = (b.altitude - b.min_altitude) / (b.max_altitude - b.min_altitude);
 
+        // if the balloon is about to be popped, show a pop image.
+        if (rat > 0.9) {
+            ctx.drawImage(
+                IMG_POP,
+                0, 0, 461, 452,
+                (b.x - b.r), (b.y - b.r), (2*b.r), (2*b.r)
+            );
+            return;
+        }
+
+        // set fill color based on the remaining lifetime of the balloon.
+        let v = 255 * rat;
+        ctx.fillStyle = `rgba(255, ${255 - v}, ${255 - v}, ${rat})`;
+
+        // draw balloon twice: once for inner fill, and another for outline.
         for (let i=0; i<2; i++) {
             // left half of balloon
             ctx.beginPath();
             ctx.moveTo(b.x,  b.y + b.r - 30);
             ctx.bezierCurveTo(
-                b.x - b.r/1.2,    b.y + b.r /3,   // control point 1
-                b.x - b.r/1.2,      b.y - b.r,   // control point 2
-                b.x,            b.y - b.r        // top of balloon
+                b.x - b.r/1.2,  b.y + b.r /3,   // control point 1
+                b.x - b.r/1.2,  b.y - b.r,      // control point 2
+                b.x,            b.y - b.r       // top of balloon
             );
-
             // right half of balloon
             ctx.moveTo(b.x,  b.y + b.r - 30);
             ctx.bezierCurveTo(
-                b.x + b.r/1.2,    b.y + b.r / 3,   // control point 1
-                b.x + b.r/1.2,      b.y - b.r,   // control point 2
-                b.x,            b.y - b.r        // top of balloon
+                b.x + b.r/1.2,  b.y + b.r / 3,  // control point 1
+                b.x + b.r/1.2,  b.y - b.r,      // control point 2
+                b.x,            b.y - b.r       // top of balloon
             );
-
+            // determine if we are drawing the outline or the filling.
             if (i==0) {
-                // set fill color based on the remaining lifetime of the balloon.
-                let rat =  (b.altitude - b.min_altitude) / (b.max_altitude - b.min_altitude)
-                let v = 255 * rat;
-                ctx.fillStyle = `rgba(255, ${255 - v}, ${255 - v}, ${rat})`;
                 ctx.fill();
             } else {
                 ctx.stroke();
@@ -563,10 +583,6 @@ function drawPlayerBoundingBox(ctx, object) {
     );
 }
 
-// helpful math
-function randbetween(min, max) {
-    return Math.random()*(max - min) + min
-}
 
 
 
@@ -600,6 +616,9 @@ class Game {
             iter: 0,
             saved_background: ''
         }
+        this.startTime = (new Date()).getTime()
+        this.savedLastScore;
+        this.savedLastTime;
         this.controller.init(this.player);
         this.initDebugger()
     }
@@ -650,6 +669,8 @@ class Game {
             this.highestScore = this.score;
         }
         if (this.player.y >= GAME_HEIGHT - this.player.h) {
+            this.savedLastScore = this.score;
+            this.savedLastTime = (new Date).getTime() - this.startTime;
             this.score = 0;
             if (currentAltitude > SCREEN_MIDDLE + 1) {
                 this._startFallAnimation();
@@ -666,11 +687,13 @@ class Game {
         this.player.anim = ANIM_JUMP;
         this.fallAnim.saved_background = canvas.style.background;
         GameController.resetAllRequests();
+        q('#endgame_score').innerText = this.savedLastScore;
+        q('#endgame_message').classList.remove('hidden');
     }
 
     _doFallingAnimation() {
         this.fallAnim.iter++;
-        let x = 255 - 3*this.fallAnim.iter;
+        let x = 255 - 2*this.fallAnim.iter;
         if (x > 0) {
             canvas.style.background = `rgb(${x},${x},${x})`;
         } else {
@@ -682,7 +705,7 @@ class Game {
                 GameObjectManager.remove(balloon.id);
             }
         });
-        if (this.fallAnim.iter > 100  && GameObjectManager.size() <= 0) {
+        if (this.fallAnim.iter > 150  && GameObjectManager.size() <= 0) {
             this._endFallAnimation();
         }
     }
@@ -691,6 +714,8 @@ class Game {
         this.state = STATE_ON;
         this.initExample1();
         canvas.style.background = this.fallAnim.saved_background;
+        q('#endgame_message').classList.add('hidden');
+        this.startTime = (new Date()).getTime()
     }
 
     drawScreen() {
@@ -715,18 +740,21 @@ class Game {
     }
 
     initDebugger() {
-        Debugger.add('hig', 'Highest Score');
-        // Debugger.add('alt', 'Altitude');
-        Debugger.add('sco', 'Score');
-        // Debugger.add('asdf', 'has collisions')
-        // Debugger.add('vx', 'vx')
-        // Debugger.add('vy', 'vy')
+        Debugger.add('high', 'Highest');
+        Debugger.add('score', 'Score');
+        Debugger.add('time', 'Time')
     }
 
     updateDebugger() {
-        Debugger.set('hig', this.highestScore);
-        // Debugger.set('alt', currentAltitude - SCREEN_MIDDLE);
-        Debugger.set('sco', this.score);
+        let elapsedTime = (new Date()).getTime() - this.startTime;
+        let minutes = Math.floor( elapsedTime / 60000 );
+        let seconds = Math.floor(( elapsedTime / 1000 ) % 60);
+        if (seconds < 10) {
+            seconds = `0${seconds}`;
+        }
+        Debugger.set('high', this.highestScore);
+        Debugger.set('score', this.score);
+        Debugger.set('time', `${minutes}:${seconds}`)
     }
 
     makeRandBalloon(minX, maxX) {

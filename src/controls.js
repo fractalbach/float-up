@@ -41,6 +41,19 @@ let REQUEST_MOVE   = false
 let savedUnitVectorX = 0;
 let savedUnitVectorY = 0;
 
+// converts event.clientX and event.clientY to the correct position on the
+// canvas.  This is needed because the canvas is resized based on the
+// screen it is viewed on.  The canvas is not always 1000 x 1000 pixels,
+// despite the fact that the drawing functions behave like it is.
+function getMousePos(canvas, clickEvent) {
+    let rect = canvas.getBoundingClientRect();
+    let x = (clickEvent.clientX - rect.left) * 1000 / rect.width;
+    let y = (clickEvent.clientY - rect.top) * 1000 / rect.height;
+    // console.log(`(${clickEvent.clientX}, ${clickEvent.clientY}) -> (${x}, ${y})`)
+    return [x, y];
+}
+
+
 
 // make a request to move in a specific direction.
 function requestDirectionalMove(unitVectorX, unitVectorY) {
@@ -142,6 +155,7 @@ let isTouching = 0;
 let firstTouch;
 let lastTouch;
 
+
 function restartTimer() {
     touchTimeStart = performance.now();
     touchTime = 0;
@@ -166,7 +180,6 @@ function calculateDirectionAndRequest(event) {
     let uvy = uv[1]
     requestDirectionalMove(uvx, uvy);
 }
-
 
 // __________________________________________________________________
 //      Touch Controls  ~  Events
@@ -202,7 +215,7 @@ function whenTouchEnds(event) {
 
         // return;
     }
-    whenClicked(lastTouch)
+    // whenClicked(lastTouch)
     isTouching = 0;
     firstTouch = undefined;
     REQUEST_MOVE = false
@@ -315,54 +328,9 @@ const ClickSpotTracker = (function(){
 
 }());
 
-// used for overlay because you need to compute the current width/height.
-function clearCanvasComputed(canvas, ctx) {
-    let cs = getComputedStyle(canvas);
-    let width = parseInt(cs.getPropertyValue('width'), 10);
-    let height = parseInt(cs.getPropertyValue('height'), 10);
-    ctx.clearRect(0, 0, width, height)
-}
-
-/**
- * drawOverlay handles all drawing events that occur on the controller overlay.
- * call this function from the main game loop when drawing other things.
- */
-function draw() {
-    // draw the click spots if they exist.
-    ClickSpotTracker.drawAll();
-    // draw joystick on the screen if neccessary.
-    // if (firstTouch !== undefined) {
-    //     let x = firstTouch.clientX;
-    //     let y = firstTouch.clientY;
-    //     drawJoyBase(ctx, x, y);
-    //     drawJoyStick(ctx, x, y, (x + 15*directionX), (y + 15*directionY));
-    // }
-}
-
-/**
- * Clears the overlay canvas entirely.  Call this at beginning of game loop.
- */
-function clearOverlay(ctx) {
-    ctx.clearRect(0, 0, 1000, 1000)
-}
-
-
-
 // __________________________________________________________________
 //      Click/Tap to jump in that direction
 // ==================================================================
-
-// converts event.clientX and event.clientY to the correct position on the
-// canvas.  This is needed because the canvas is resized based on the
-// screen it is viewed on.  The canvas is not always 1000 x 1000 pixels,
-// despite the fact that the drawing functions behave like it is.
-function getMousePos(canvas, clickEvent) {
-    let rect = canvas.getBoundingClientRect();
-    let x = (clickEvent.clientX - rect.left) * 1000 / rect.width;
-    let y = (clickEvent.clientY - rect.top) * 1000 / rect.height;
-    // console.log(`(${clickEvent.clientX}, ${clickEvent.clientY}) -> (${x}, ${y})`)
-    return [x, y];
-}
 
 function whenClicked(event) {
     let [x, y] = getMousePos(canvas, event);
@@ -400,6 +368,10 @@ function init(player) {
     document.addEventListener("keydown", whenKeyGoesDown);
     addClickEventListener(canvas, player);
     addControlEventListeners(canvas);
+}
+
+function draw() {
+    ClickSpotTracker.drawAll();
 }
 
 return {

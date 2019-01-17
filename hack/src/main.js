@@ -7,7 +7,7 @@ const q = document.querySelector.bind(document);
 // numerical constants used throughout the game.
 const GAME_WIDTH        = 1000;
 const GAME_HEIGHT       = 1000;
-const SCREEN_MIDDLE     = 600;
+const SCREEN_MIDDLE     = 300;
 const MAX_PLAYER_SPEED  = 8;    // player's vx max
 const MAX_JUMP_SPEED    = 20;   // player's vy max
 const TERMINAL_VELOCITY = 10;   // can't fall faster than TERMINAL_VELOCITY.

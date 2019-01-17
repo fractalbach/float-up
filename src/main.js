@@ -5,16 +5,18 @@ var GAME;
 const q = document.querySelector.bind(document);
 
 // numerical constants used throughout the game.
-const GAME_WIDTH  = 1000;
-const GAME_HEIGHT = 1000;
-const SCREEN_MIDDLE = 400;
-const FEEDBACK_BUFFER = 20;
-const MAX_BALLOON_LIFE = 240;
-const MAX_PLAYER_SPEED = 8;
-const TERMINAL_VELOCITY = 10;  // can't fall faster than TERMINAL_VELOCITY.
-const GRAVITY_VELOCITY = 0.5;  // yes, in this game, gravity is a velocity.
+const GAME_WIDTH        = 1000;
+const GAME_HEIGHT       = 1000;
+const SCREEN_MIDDLE     = 400;
+const MAX_PLAYER_SPEED  = 8;    // player's vx max
+const MAX_JUMP_SPEED    = 20;   // player's vy max
+const TERMINAL_VELOCITY = 10;   // can't fall faster than TERMINAL_VELOCITY.
+const GRAVITY_VELOCITY  = 0.5;  // yes, in this game, gravity is a velocity.
+const FEEDBACK_BUFFER   = 20;   // in # of frames
+const MAX_BALLOON_LIFE  = 240;  // in # of frames
+const BALLOON_RADIUS    = 100;  // in pixels
+const BALLOON_RISING    = 5;    // how fast the ballon rises
 
-const BALLOON_RADIUS = 100;
 
 // global variables.
 let currentAltitude = SCREEN_MIDDLE;
@@ -74,7 +76,7 @@ class Balloon {
         this.id = 0;
         this.has_been_touched = false;
         this.has_popped = false;
-        this.rising_speed = 5;
+        this.rising_speed = BALLOON_RISING;
         this.max_altitude = this.altitude + MAX_BALLOON_LIFE * this.rising_speed;
     }
 
@@ -169,9 +171,9 @@ class Player {
         this.isGrabbing = false;
         this.anim = ANIM_STAND;
         this.myBalloon = undefined;
-        this.actionCooldown = 0;
         this.friction = 0.5;
         this.altitude = 0;
+        this.cooldown = 0;
     }
 
     jump() {
@@ -180,6 +182,7 @@ class Player {
             this.vy -= 20;
             this.isFalling = true;
             this.isGrabbing = false;
+            this.cooldown = 20;
         }
     }
 
@@ -241,32 +244,50 @@ class Player {
             this.vy = 0;
             this.isFalling = false;
             this.anim = ANIM_STAND;
-        } else {
-            // you are falling!
-            if (this.vy < TERMINAL_VELOCITY) {
-                this.vy += GRAVITY_VELOCITY
+        }
+        if (this.cooldown <= 0) {
+            let collisions = GameObjectManager.findCollisionsWith(this);
+            if (collisions.length > 0) {
+                this.grab(collisions[0])
+                GameController.resetAllRequests();
+                return;
             }
         }
+        if (this.cooldown > 0) {
+            this.cooldown--
+        }
+        this._doGravity();
+        this._stepY()
+        this._doFriction();
+        this._stepX();
+    }
+
+    _stepY() {
         this.y += this.vy;
-        // this.doXmovement();
     }
 
-    doXmovement() {
-        if ((this.x + this.vx < 0) || (this.x + this.vx > (GAME_WIDTH - this.w))) {
+    _stepX() {
+        if ((this.x + this.vx < 0) || (this.x + this.vx > GAME_WIDTH - this.w)){
             this.vx = 0;
-        }
-        this.x += this.vx;
-    }
-
-    doFriction() {
-        if (Math.abs(this.vx) < this.friction) {
-            this.vx = 0;
-            return;
-        }
-        if (this.vx > 0) {
-            this.vx -= this.friction
         } else {
-            this.vx += this.friction
+            this.x += this.vx;
+        }
+    }
+
+    _doGravity() {
+        if (this.vy < TERMINAL_VELOCITY) {
+            this.vy += GRAVITY_VELOCITY
+        }
+    }
+
+    _doFriction() {
+        let s = Math.sign(this.vx)
+        let v = Math.abs(this.vx)
+        let next = v - this.friction;
+        if (next < 0) {
+            this.vx = 0;
+        } else {
+            this.vx = s * next;
         }
     }
 
@@ -521,7 +542,6 @@ const STATE_FALL  = 202;
 
 class Game {
     constructor() {
-        this.GOM          = GameObjectManager
         this.player       = new Player(SCREEN_MIDDLE + 10, SCREEN_MIDDLE + 10, 100, 150)
         this.controller   = GameController
         this.score        = 0;
@@ -537,14 +557,14 @@ class Game {
 
     initExample1() {
         // create a convenient balloon that you can always reach.
-        this.GOM.add(new Balloon(
+        GameObjectManager.add(new Balloon(
             GAME_WIDTH / 2,
             GAME_HEIGHT - 5*BALLOON_RADIUS,
             BALLOON_RADIUS
         ));
         // make some random balloons
-        for (let i=0; i<10; i++) {
-            this.GOM.add(new Balloon(
+        for (let i=0; i<7; i++) {
+            GameObjectManager.add(new Balloon(
                 randbetween(0, GAME_WIDTH - BALLOON_RADIUS),
                 GAME_HEIGHT - 5*BALLOON_RADIUS - (i * 100),
                 BALLOON_RADIUS
@@ -630,7 +650,7 @@ class Game {
         GameView.drawPlayer(this.player);
         drawPlayerBoundingBox(ctx, this.player);
         // draw each of the objects onto the screen.
-        this.GOM.forEach(function(object){
+        GameObjectManager.forEach(function(object){
             GameView.draw(object);
             drawBoundingBox(ctx, object);
         });
@@ -642,14 +662,6 @@ class Game {
     }
 
     determinePlayerAction() {
-        if (this.player.isGrabbing !== true) {
-            let collisions = this.GOM.findCollisionsWith(this.player);
-            if (collisions.length > 0) {
-                this.player.grab(collisions[0])
-                this.controller.resetAllRequests();
-                return;
-            }
-        }
         this.player.jump()
     }
 
@@ -657,6 +669,9 @@ class Game {
         Debugger.add('hig', 'Highest Score');
         // Debugger.add('alt', 'Altitude');
         Debugger.add('sco', 'Score');
+        // Debugger.add('asdf', 'has collisions')
+        // Debugger.add('vx', 'vx')
+        // Debugger.add('vy', 'vy')
     }
 
     updateDebugger() {
@@ -668,7 +683,7 @@ class Game {
     makeRandBalloonAtTopOfScreen() {
         let maxX = 900;
         let minX = 2*BALLOON_RADIUS;
-        this.GOM.add(new Balloon(
+        GameObjectManager.add(new Balloon(
             (Math.random()*(maxX - minX) + minX),
             -3*BALLOON_RADIUS,
             BALLOON_RADIUS

@@ -16,10 +16,12 @@ const GRAVITY_VELOCITY  = 0.5;  // yes, in this game, gravity is a velocity.
 
 const FEEDBACK_BUFFER   = 20;   // in # of frames
 const MIN_BALLOON_LIFE  = 30;  // in # of frames
-const MAX_BALLOON_LIFE  = 240;  // in # of frames
+const MAX_BALLOON_LIFE  = 140;  // in # of frames
 const BALLOON_RADIUS    = 100;  // pixels per frame
-const BALLOON_RISING    = 5;    // pixels per frame: how fast the ballon rises
+const BALLOON_RISING    = 9;    // pixels per frame: how fast the ballon rises
 
+const MIN_BALLOON_INTERVAL = 100
+const MAX_BALLON_INTERVAL  = 400
 
 // altitude keeps track of how high the player has gone through the game.
 // this is directly related to the score.
@@ -221,9 +223,12 @@ class Player {
 
     moveUp() {}
 
-    moveDown(){}
+    moveDown() {}
 
-    directionalMove(unitVectorX, unitVectorY) {
+    directionalMove(unitVectorX, unitVectorY, lastX) {
+        if (Math.abs((this.x + this.w/2) - lastX) < MAX_PLAYER_SPEED) {
+            return;
+        }
         let move = unitVectorX * MAX_PLAYER_SPEED;
         if (((move < 0) && (this.x + move > 0)) ||
             ((move > 0) && (this.x + move < GAME_WIDTH - this.w))
@@ -619,6 +624,8 @@ class Game {
         this.startTime = (new Date()).getTime()
         this.savedLastScore;
         this.savedLastTime;
+        this.lastNewBalloonAltitude = currentAltitude;
+        this.nextBallonInterval = randbetween(MIN_BALLOON_INTERVAL, MAX_BALLON_INTERVAL);
         this.controller.init(this.player);
         this.initDebugger()
     }
@@ -646,6 +653,7 @@ class Game {
             this._doFallingAnimation();
             return;
         }
+        //
         GameController.processInputsAndStep(this);
         this.player.step();
         GameObjectManager.forEach((balloon)=>{
@@ -653,17 +661,23 @@ class Game {
             // delete objects that have gone below the screen.
             if (balloon.y > GAME_HEIGHT) {
                 GameObjectManager.remove(balloon.id);
-                this.makeRandBalloonAtTopOfScreen();
                 return;
             }
             // delete balloons that have already poppped
             if (balloon.hasPopped() === true) {
                 GameObjectManager.remove(balloon.id);
-                this.makeRandBalloonAtTopOfScreen();
                 return;
             }
         })
         GameView.updateAltitude(this.player);
+        //
+        // make a new balloon after a certain amount of distance has passed.
+        if (currentAltitude - this.lastNewBalloonAltitude > this.nextBallonInterval) {
+            this.nextBallonInterval = randbetween(MIN_BALLOON_INTERVAL, MAX_BALLON_INTERVAL);
+            this.makeRandBalloonAtTopOfScreen();
+            this.lastNewBalloonAltitude = currentAltitude;
+        }
+        //
         // update game score and check for losing state.
         if (this.score > this.highestScore) {
             this.highestScore = this.score;
@@ -676,6 +690,7 @@ class Game {
                 this._startFallAnimation();
             }
             currentAltitude = SCREEN_MIDDLE;
+            this.lastNewBalloonAltitude = currentAltitude;
         } else {
             this.score = Math.floor((currentAltitude - SCREEN_MIDDLE) / 100)
         }
@@ -705,7 +720,7 @@ class Game {
                 GameObjectManager.remove(balloon.id);
             }
         });
-        if (this.fallAnim.iter > 150  && GameObjectManager.size() <= 0) {
+        if (this.fallAnim.iter > 50  && GameObjectManager.size() <= 0) {
             this._endFallAnimation();
         }
     }
@@ -756,17 +771,33 @@ class Game {
         Debugger.set('score', this.score);
         Debugger.set('time', `${minutes}:${seconds}`)
     }
-
-    makeRandBalloon(minX, maxX) {
-        GameObjectManager.add(new Balloon(
-            (Math.random()*(maxX - minX) + minX),
-            -3*BALLOON_RADIUS,
-            BALLOON_RADIUS
-        ));
-    }
+    //
+    // makeRandBalloon(minX, maxX) {
+    //     GameObjectManager.add(new Balloon(
+    //         (Math.random()*(maxX - minX) + minX),
+    //         -3*BALLOON_RADIUS,
+    //         BALLOON_RADIUS
+    //     ));
+    // }
 
     makeRandBalloonAtTopOfScreen() {
-        this.makeRandBalloon(0, 1000)
+        // randomly generates a new balloon, ensuring that new balloons
+        // don't appear directly above you. (otherwise it would be too easy.)
+        // if you aren't holding a balloon, it can just appear anywhere.
+        //
+        let r = randbetween(2*BALLOON_RADIUS, 1000-BALLOON_RADIUS)
+        if (this.player.isGrabbing === true) {
+            let buff = 4*BALLOON_RADIUS;
+            let lowX = this.player.myBalloon.x - buff/2;
+            r = randbetween(2*BALLOON_RADIUS, 1000-BALLOON_RADIUS-buff)
+            if (r > lowX) {
+                r += buff;
+            }
+        }
+        GameObjectManager.add(new Balloon(
+            r, -3*BALLOON_RADIUS, BALLOON_RADIUS
+        ))
+        // this.makeRandBalloon(2*BALLOON_RADIUS, 1000-BALLOON_RADIUS)
     }
 }
 

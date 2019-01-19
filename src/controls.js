@@ -40,6 +40,7 @@ let REQUEST_MOVE   = false
 // variables
 let savedUnitVectorX = 0;
 let savedUnitVectorY = 0;
+let targetX          = 0;
 
 // converts event.clientX and event.clientY to the correct position on the
 // canvas.  This is needed because the canvas is resized based on the
@@ -56,10 +57,11 @@ function getMousePos(canvas, clickEvent) {
 
 
 // make a request to move in a specific direction.
-function requestDirectionalMove(unitVectorX, unitVectorY) {
+function requestDirectionalMove(unitVectorX, unitVectorY, x) {
     REQUEST_MOVE = true;
     savedUnitVectorX = unitVectorX;
     savedUnitVectorY = unitVectorY;
+    targetX = x;
 }
 
 // step will go through the requests and actually execute commands.
@@ -70,7 +72,7 @@ function processInputsAndStep(game) {
         game.determinePlayerAction();
     }
     if (REQUEST_MOVE === true) {
-        game.player.directionalMove(savedUnitVectorX, savedUnitVectorY);
+        game.player.directionalMove(savedUnitVectorX, savedUnitVectorY, targetX);
         resetActionRequests();
         return;
     }
@@ -117,11 +119,18 @@ function unitVector(a,b) {
     return [a/norm, b/norm];
 }
 
+function arrayAverage(arr) {
+    let sum = 0;
+    for (let v of arr) {
+        sum += v;
+    }
+    return sum / arr.length;
+}
+
+
 // __________________________________________________________________
 //      Keyboard Controls
 // ==================================================================
-
-// add event listeners to trigger the input manager.
 
 function whenKeyGoesDown(event) {
     switch (event.code) {
@@ -133,7 +142,6 @@ function whenKeyGoesDown(event) {
     }
 }
 
-
 function whenKeyGoesUp(event) {
     switch (event.code) {
         case 'ArrowUp':     REQUEST_UP = false; return;
@@ -144,22 +152,74 @@ function whenKeyGoesUp(event) {
 }
 
 
+// __________________________________________________________________
+//      Touch Controls  - Tracking differences between touches.
+// ==================================================================
+const DiffTracker = (function(){
+
+    let listX = [];
+    let listY = [];
+
+    function add(x, y) {
+        listX.push(x);
+        listY.push(y);
+    }
+
+    function clear() {
+        listX = [];
+        listY = [];
+    }
+
+    function _averageDiff(arr) {
+        let len = arr.length
+        if (len < 2) {
+            return 0;
+        }
+        let diffs = [];
+        for (let i = 0; i < (len - 1); i++) {
+            diffs.push(arr[i+1] - arr[i]);
+        }
+        return arrayAverage(diffs);
+    }
+
+    function averageDifferenceX() {
+        return _averageDiff(listX);
+    }
+
+    function averageDifferenceY() {
+        return _averageDiff(listY);
+    }
+
+    return {
+        add,
+        clear,
+        averageDifferenceX,
+        averageDifferenceY,
+    }
+
+}());
+
 
 
 // __________________________________________________________________
-//      Touch Controls  ~  Setup
+//      Touch Controls  -  Setup
 // ==================================================================
 let touchTimeStart = 0;
 let touchTime = 0;
-let isTouching = 0;
 let firstTouch;
 let lastTouch;
+let target = [-1, -1];
 
+
+// __________________________________________________________________
+//      Touch Controls  -  Support Functions
+// ==================================================================
 
 function restartTimer() {
     touchTimeStart = performance.now();
     touchTime = 0;
 }
+
 function updateTouchTime() {
     touchTime = performance.now() - touchTimeStart;
 }
@@ -178,25 +238,18 @@ function calculateDirectionAndRequest(event) {
     let uv = unitVector(dx, dy);
     let uvx = uv[0]
     let uvy = uv[1]
-    requestDirectionalMove(uvx, uvy);
+    requestDirectionalMove(uvx, uvy, x);
 }
+
 
 // __________________________________________________________________
-//      Touch Controls  ~  Events
+//      Touch Controls  -  Events
 // ==================================================================
-
-function displayTouch(touchEvent) {
-    for (let touch of touchEvent.touches) {
-        let [x, y] = getMousePos(canvas, touch)
-        ClickSpotTracker.addClickLocation(x, y);
-    }
-}
 
 function whenTouchStarts(event) {
     event.preventDefault();
     displayTouch(event)
     restartTimer();
-    isTouching = 1;
     lastTouch = firstTouch = event.touches[0];
     whenClicked(lastTouch);
 }
@@ -212,20 +265,22 @@ function whenTouchMoves(event) {
 function whenTouchEnds(event) {
     touchTime = performance.now() - touchTimeStart;
     if (touchTime < TAP_DELAY) {
-
-        // return;
     }
-    // whenClicked(lastTouch)
-    isTouching = 0;
     firstTouch = undefined;
-    REQUEST_MOVE = false
+    // REQUEST_MOVE = false
     // whenClicked(lastTouch);
 }
 
 function whenTouchCancels(event) {
-    isTouching = 0;
     firstTouch = undefined;
     REQUEST_MOVE = false
+}
+
+function displayTouch(touchEvent) {
+    for (let touch of touchEvent.touches) {
+        let [x, y] = getMousePos(canvas, touch)
+        ClickSpotTracker.addClickLocation(x, y);
+    }
 }
 
 // __________________________________________________________________
@@ -277,7 +332,7 @@ const ClickSpotTracker = (function(){
         constructor() {
             this.x = 0;
             this.y = 0;
-            this.r = DEFAULT_CIRCLE_RADIUS;
+            this.r = 0;
         }
         draw() {
             ctx.fillStyle = CIRCLE_COLOR;
@@ -339,7 +394,7 @@ function whenClicked(event) {
     let dx = x - playerCenterX;
     let dy = y - playerCenterY;
     let [uvx, uvy] = unitVector(dx, dy);
-    requestDirectionalMove(uvx, uvy);
+    requestDirectionalMove(uvx, uvy, x);
     REQUEST_ACTION = true;
     ClickSpotTracker.addClickLocation(x, y);
 };
@@ -366,7 +421,7 @@ function init(player) {
     myPlayer = player;
     document.addEventListener("keyup", whenKeyGoesUp);
     document.addEventListener("keydown", whenKeyGoesDown);
-    addClickEventListener(canvas, player);
+    // addClickEventListener(canvas, player);
     addControlEventListeners(canvas);
 }
 

@@ -23,7 +23,8 @@ const ScoreboardViewer = (function(){
     }
 
     function addEntry(name, score, time) {
-        time = (new Date(time)).toDateString()
+
+        time = (new Date(time)).toLocaleTimeString() + ', ' + (new Date(time)).toDateString()
         let col_score = document.createElement('td');
         let col_name  = document.createElement('td');
         let col_time  = document.createElement('td');

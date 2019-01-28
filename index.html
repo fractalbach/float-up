@@ -49,6 +49,7 @@
 
         <div id="scoreboard_background" class="square">
             <div id="scoreboard_wrap">
+                <button id="scoreboard_button_hide">Close Highscores</button>
                 <table id="scoreboard_table" class="board">
                     <thead>
                         <tr><th colspan="3">Highscores</th></tr>
@@ -79,7 +80,7 @@
                     <tbody id="scoreboard_body">
                     </tbody>
                 </table>
-                <button id="scoreboard_button_hide">Close</button>
+
             </div>
         </div>
 
@@ -227,6 +228,9 @@
         display: block;
         text-align: center;
     }
+    #scoreboard_background {
+        overflow: auto;
+    }
     #scoreboard_wrap {
         background: rgba(200, 200, 200, 0.8);
         border-radius: 1em;
@@ -234,6 +238,7 @@
         display: table;
         margin: 1em auto;
         padding: 1em;
+        padding-top: 0;
         text-align: center;
     }
     #scoreboard_button_hide {
@@ -242,6 +247,7 @@
 
     /* ======== New Score Prompter ========= */
     #score_prompt_background {
+
     }
     #score_prompt_wrapper {
         padding: 1em;

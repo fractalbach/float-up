@@ -14,8 +14,6 @@ const ScoreboardViewer = (function(){
     const SCOREBOARD_BACKGROUND  = q("#scoreboard_background")
     const SCOREBOARD_ELEMENT     = q("#scoreboard_body")
     const SCOREBOARD_TITLE       = q("#scoreboard_title")
-    // const SCOREBOARD_DESCRIPTION = q("#scoreboard_description")
-    // const SCOREBOARD_MAXENTRIES  = q("#scoreboard_maxentries")
     const SCOREBOARD_HIDE_BUTTON = q("#scoreboard_button_hide")
 
     function init() {
@@ -47,8 +45,6 @@ const ScoreboardViewer = (function(){
         }
         clear()
         SCOREBOARD_TITLE.innerText = data.Title
-        // SCOREBOARD_DESCRIPTION.innerText = data.Description
-        // SCOREBOARD_MAXENTRIES.innerText = data.MaxEntries
         if (!data.Entries || data.Entries == null) {
             return
         }

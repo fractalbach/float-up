@@ -47,6 +47,51 @@
             <span id="endgame_score">0</span>
         </div>
 
+        <div id="scoreboard_background" class="square">
+            <div id="scoreboard_wrap">
+                <table id="scoreboard_table" class="board">
+                    <thead>
+                        <tr><th colspan="3">Highscores</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <tr>
+                                <th>Title</th>
+                                <td colspan="2" id="scoreboard_title">-</td>
+                            </tr>
+                            <tr>
+                                <th>Description</th>
+                                <td colspan="2" id="scoreboard_description">-</td>
+                            </tr>
+                            <tr>
+                                <th>Max Entries</th>
+                                <td colspan="2" id="scoreboard_maxentries">-</td>
+                        </tr>
+                    </tbody>
+                    <thead>
+                        <tr><th colspan="3"> <br\>  List of Entries</th></tr>
+                        <tr>
+                            <th>Name</th>
+                            <th>Score</th>
+                            <th>Time</th>
+                        </tr>
+                    </thead>
+                    <tbody id="scoreboard_body">
+                    </tbody>
+                </table>
+                <button id="scoreboard_button_hide">Close</button>
+            </div>
+        </div>
+
+        <div id="score_prompt_background" class="square hidden">
+            <div id="score_prompt_wrapper">
+                <p>Congrats! You set a new highscore!</p>
+                <p>Enter Name: <input type="text" id="score_prompt_text"></p>
+                <button id="score_prompt_submit">Add Score to Board!</button>
+                <button id="score_prompt_close">Close</button>
+            </div>
+        </div>
+
         <!-- <div id="wrapfunmsg" class="fader"><div id="funmsg">Feather Mode Activated!</div></div> -->
 
         <!-- <div id="overlay" class="square"></div> -->
@@ -172,11 +217,49 @@
             -1px 1px 0 #000,
             1px 1px 0 #000;
     }
+
+    button {
+        padding: 1em;
+    }
+
+    /* ========= Scoreboard ======== */
+    .board {
+        display: block;
+        text-align: center;
+    }
+    #scoreboard_wrap {
+        background: rgba(200, 200, 200, 0.8);
+        border-radius: 1em;
+        border: 1em solid rgba(200, 0, 0, 0.5);
+        display: table;
+        margin: 1em auto;
+        padding: 1em;
+        text-align: center;
+    }
+    #scoreboard_button_hide {
+        margin: 1em;
+    }
+
+    /* ======== New Score Prompter ========= */
+    #score_prompt_background {
+    }
+    #score_prompt_wrapper {
+        padding: 1em;
+        background: rgba(0, 0, 0, 0.9);
+        border-radius: 1em;
+        /* height: 100%; */
+        text-align: center;
+        display: block;
+        color: white;
+        font-weight: bold;
+        font-size:200%;
+    }
     </style>
 
     <!-- <script src="controls.js"></script> -->
     <script src="src/debugger.js"></script>
     <script src="src/controls.js"></script>
+    <script src="src/scores.js"></script>
     <script src="src/main.js"></script>
     <script async src="https://www.googletagmanager.com/gtag/js?id=UA-131925744-1"></script>
     <script>

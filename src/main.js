@@ -612,7 +612,7 @@ const STATE_FALL  = 202;
 
 class Game {
     constructor() {
-        this.player       = new Player(SCREEN_MIDDLE + 10, SCREEN_MIDDLE + 10, 100, 150)
+        this.player       = new Player(SCREEN_MIDDLE + 10, GAME_HEIGHT - 150, 100, 150)
         this.controller   = GameController
         this.score        = 0;
         this.highestScore = 0;
@@ -704,6 +704,7 @@ class Game {
         GameController.resetAllRequests();
         q('#endgame_score').innerText = this.savedLastScore;
         q('#endgame_message').classList.remove('hidden');
+        GameHighscores.handle(this.savedLastScore);
     }
 
     _doFallingAnimation() {

@@ -14,8 +14,8 @@ const ScoreboardViewer = (function(){
     const SCOREBOARD_BACKGROUND  = q("#scoreboard_background")
     const SCOREBOARD_ELEMENT     = q("#scoreboard_body")
     const SCOREBOARD_TITLE       = q("#scoreboard_title")
-    const SCOREBOARD_DESCRIPTION = q("#scoreboard_description")
-    const SCOREBOARD_MAXENTRIES  = q("#scoreboard_maxentries")
+    // const SCOREBOARD_DESCRIPTION = q("#scoreboard_description")
+    // const SCOREBOARD_MAXENTRIES  = q("#scoreboard_maxentries")
     const SCOREBOARD_HIDE_BUTTON = q("#scoreboard_button_hide")
 
     function init() {
@@ -23,7 +23,6 @@ const ScoreboardViewer = (function(){
     }
 
     function addEntry(name, score, time) {
-
         time = (new Date(time)).toLocaleTimeString() + ', ' + (new Date(time)).toDateString()
         let col_score = document.createElement('td');
         let col_name  = document.createElement('td');
@@ -48,8 +47,8 @@ const ScoreboardViewer = (function(){
         }
         clear()
         SCOREBOARD_TITLE.innerText = data.Title
-        SCOREBOARD_DESCRIPTION.innerText = data.Description
-        SCOREBOARD_MAXENTRIES.innerText = data.MaxEntries
+        // SCOREBOARD_DESCRIPTION.innerText = data.Description
+        // SCOREBOARD_MAXENTRIES.innerText = data.MaxEntries
         if (!data.Entries || data.Entries == null) {
             return
         }

@@ -47,12 +47,12 @@
             <span id="endgame_score">0</span>
         </div>
 
-        <div id="scoreboard_background" class="square">
+        <div id="scoreboard_background">
             <div id="scoreboard_wrap">
                 <button id="scoreboard_button_hide">Close Highscores</button>
                 <table id="scoreboard_table" class="board">
-                    <thead>
-                        <tr><th colspan="3">Highscores</th></tr>
+                    <!-- <thead>
+
                     </thead>
                     <tbody>
                         <tr>
@@ -68,9 +68,10 @@
                                 <th>Max Entries</th>
                                 <td colspan="2" id="scoreboard_maxentries">-</td>
                         </tr>
-                    </tbody>
+                    </tbody> -->
                     <thead>
-                        <tr><th colspan="3"> <br\>  List of Entries</th></tr>
+                        <tr><th colspan="3"><span id="scoreboard_title" style="font-size: 200%">Highscores</span></th></tr>
+                        <!-- <tr><th colspan="3"> <br\>  List of Entries</th></tr> -->
                         <tr>
                             <th>Name</th>
                             <th>Score</th>
@@ -230,11 +231,16 @@
         text-align: center;
     }
     #scoreboard_background {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
         overflow: auto;
     }
     #scoreboard_wrap {
         background: rgba(200, 200, 200, 0.8);
-        border-radius: 1em;
+        /* border-radius: 1em; */
         border: 1em solid rgba(200, 0, 0, 0.5);
         display: table;
         margin: auto auto;

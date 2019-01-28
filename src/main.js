@@ -704,6 +704,7 @@ class Game {
         GameController.resetAllRequests();
         q('#endgame_score').innerText = this.savedLastScore;
         q('#endgame_message').classList.remove('hidden');
+        q('#score_prompt_score_txt').innerText = this.savedLastScore;
         GameHighscores.handle(this.savedLastScore);
     }
 

@@ -435,7 +435,7 @@ const GameObjectManager = (function(){
 // canvas context settings.
 const canvas = q("#game");
 const ctx = canvas.getContext("2d");
-// ctx.lineWidth = 5;
+ctx.lineWidth = 5;
 ctx.lineCap = 'round';
 
 

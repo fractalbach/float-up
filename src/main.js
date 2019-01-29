@@ -108,6 +108,9 @@ class Balloon {
     }
 
     _pop() {
+        if (this.has_popped === false) {
+            GameSoundEffects.playBalloonPopSound()
+        }
         this.has_popped = true;
     }
 

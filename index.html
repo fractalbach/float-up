@@ -47,7 +47,7 @@
             <span id="endgame_score">0</span>
         </div>
 
-        <div id="scoreboard_background">
+        <div id="scoreboard_background" class="overlay">
             <div id="scoreboard_wrap">
                 <button id="scoreboard_button_hide">Close Highscores</button>
                 <table id="scoreboard_table" class="board">
@@ -66,13 +66,13 @@
             </div>
         </div>
 
-        <div id="score_prompt_background" class="square hidden">
+        <div id="score_prompt_background" class="overlay hidden">
             <div id="score_prompt_wrapper">
-                <p>Congrats! You set a new highscore!</p>
+                <button id="score_prompt_close">Close</button>
+                <p>New highscore!</p>
                 <p>Score: <span id="score_prompt_score_txt">0</span></p>
                 <p>Name: <input type="text" id="score_prompt_text"></p>
-                <button id="score_prompt_submit">Add Score to Board!</button>
-                <button id="score_prompt_close">Close</button>
+                <button id="score_prompt_submit">Add Score!</button>
             </div>
         </div>
 
@@ -206,6 +206,16 @@
         padding: 1em;
     }
 
+    .overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.8);
+        overflow: auto;
+    }
+
     /* ========= Scoreboard ======== */
     .board {
         display: block;
@@ -214,20 +224,11 @@
     #scoreboard_title{
         font-size: 200%;
     }
-    #scoreboard_background {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        overflow: auto;
-    }
     #scoreboard_wrap {
-        background: rgba(200, 200, 200, 0.8);
-        /* border-radius: 1em; */
+        background: rgba(200,200,200, 0.8);
         border: 1em solid rgba(200, 0, 0, 0.5);
         display: table;
-        margin: auto auto;
+        margin: auto;
         padding: 1em;
         padding-top: 0;
         text-align: center;
@@ -241,15 +242,18 @@
 
     }
     #score_prompt_wrapper {
-        padding: 1em;
-        background: rgba(0, 0, 0, 0.9);
-        border-radius: 1em;
-        /* height: 100%; */
+        display: table;
         text-align: center;
-        display: block;
+        background: rgba(0, 100, 0, 0.8);
+        border: 1em solid #03A9F4;
+        margin: auto;
         color: white;
+        padding: 1em;
         font-weight: bold;
         font-size:200%;
+    }
+    #score_prompt_text {
+        height: 2em;
     }
     </style>
 

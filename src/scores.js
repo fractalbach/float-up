@@ -137,7 +137,7 @@ const GameHighscoresClient = (function(){
             return response.json();
         })
         .then(myJson => {
-            console.log(JSON.stringify(myJson));
+            // console.log(JSON.stringify(myJson));
             if (processDataFunction !== undefined) {
                 processDataFunction(myJson);
             }

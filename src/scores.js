@@ -108,7 +108,7 @@ const GameHighscoresClient = (function(){
             return true
         }
         for (entry of dataCache.Entries) {
-            if (entry.Score > entry) {
+            if (score > entry.Score) {
                 return true
             }
         }

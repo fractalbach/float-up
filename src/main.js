@@ -191,10 +191,10 @@ class Player {
         this.cooldown = 0;
     }
 
-    jump() {
+    jump(unitVectorY) {
         if ((this.y > 0) && (this.isFalling !== true)) {
             this.anim = ANIM_JUMP;
-            this.vy -= 20;
+            this.vy = -MAX_JUMP_SPEED + (unitVectorY)*5;
             this.isFalling = true;
             this.isGrabbing = false;
             this.cooldown = 20;
@@ -206,6 +206,7 @@ class Player {
         // console.log("grab!")
         this.anim = ANIM_GRAB;
         this.vy = 0;
+        this.vx = 0;
         this.isFalling = false;
         this.isGrabbing = true;
         this.myBalloon = balloon;
@@ -214,13 +215,19 @@ class Player {
 
     moveLeft() {
         if (this.x > 0) {
-            this.x -= MAX_PLAYER_SPEED;
+            this.vx = -MAX_PLAYER_SPEED;
+        }
+        if (this.isGrabbing === true) {
+            this.x += this.vx;
         }
     }
 
     moveRight() {
         if (this.x < GAME_WIDTH - this.w) {
-            this.x += MAX_PLAYER_SPEED;
+            this.vx = MAX_PLAYER_SPEED;
+        }
+        if (this.isGrabbing === true) {
+            this.x += this.vx;
         }
     }
 
@@ -229,6 +236,7 @@ class Player {
     moveDown() {}
 
     directionalMove(unitVectorX, unitVectorY, lastX) {
+        this.jump(unitVectorY);
         if (Math.abs((this.x + this.w/2) - lastX) < MAX_PLAYER_SPEED) {
             return;
         }
@@ -236,7 +244,8 @@ class Player {
         if (((move < 0) && (this.x + move > 0)) ||
             ((move > 0) && (this.x + move < GAME_WIDTH - this.w))
         ){
-            this.x = this.x + move;
+            // this.x = this.x + move;
+            this.vx = move;
         }
     }
 
@@ -707,8 +716,8 @@ class Game {
         GameController.resetAllRequests();
         q('#endgame_score').innerText = this.savedLastScore;
         q('#endgame_message').classList.remove('hidden');
-        q('#score_prompt_score_txt').innerText = this.savedLastScore;
-        GameHighscores.handle(this.savedLastScore);
+        // q('#score_prompt_score_txt').innerText = this.savedLastScore;
+        // GameHighscores.handle(this.savedLastScore);
     }
 
     _doFallingAnimation() {
@@ -756,7 +765,7 @@ class Game {
     }
 
     determinePlayerAction() {
-        this.player.jump()
+        // this.player.jump()
     }
 
     initDebugger() {

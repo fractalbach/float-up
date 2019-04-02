@@ -18,7 +18,7 @@ const FEEDBACK_BUFFER   = 20;   // in # of frames
 const MIN_BALLOON_LIFE  = 30;  // in # of frames
 const MAX_BALLOON_LIFE  = 140;  // in # of frames
 const BALLOON_RADIUS    = 100;  // pixels per frame
-const BALLOON_RISING    = 9;    // pixels per frame: how fast the ballon rises
+const BALLOON_RISING    = 5;    // pixels per frame: how fast the ballon rises
 
 const MIN_BALLOON_INTERVAL = 100
 const MAX_BALLON_INTERVAL  = 400
@@ -194,7 +194,7 @@ class Player {
     jump(unitVectorY) {
         if ((this.y > 0) && (this.isFalling !== true)) {
             this.anim = ANIM_JUMP;
-            this.vy = -MAX_JUMP_SPEED + (unitVectorY)*5;
+            this.vy = -MAX_JUMP_SPEED;
             this.isFalling = true;
             this.isGrabbing = false;
             this.cooldown = 20;
@@ -224,11 +224,12 @@ class Player {
 
     moveRight() {
         if (this.x < GAME_WIDTH - this.w) {
-            this.vx = MAX_PLAYER_SPEED;
+            this.x += MAX_PLAYER_SPEED
+            // this.vx = MAX_PLAYER_SPEED;
         }
-        if (this.isGrabbing === true) {
-            this.x += this.vx;
-        }
+        // if (this.isGrabbing === true) {
+        //     this.x += this.vx;
+        // }
     }
 
     moveUp() {}

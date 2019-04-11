@@ -772,19 +772,11 @@ class Game {
     initDebugger() {
         Debugger.add('high', 'Highest');
         Debugger.add('score', 'Score');
-        Debugger.add('time', 'Time')
     }
 
     updateDebugger() {
-        let elapsedTime = (new Date()).getTime() - this.startTime;
-        let minutes = Math.floor( elapsedTime / 60000 );
-        let seconds = Math.floor(( elapsedTime / 1000 ) % 60);
-        if (seconds < 10) {
-            seconds = `0${seconds}`;
-        }
         Debugger.set('high', this.highestScore);
         Debugger.set('score', this.score);
-        Debugger.set('time', `${minutes}:${seconds}`)
     }
     //
     // makeRandBalloon(minX, maxX) {

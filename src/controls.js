@@ -68,13 +68,14 @@ function requestDirectionalMove(unitVectorX, unitVectorY, x) {
 // This function should only be executed during the main game loop, in
 // order to maintain temporal consistency with the rest of the game.
 function processInputsAndStep(game) {
+    gamepadLoop(game);
     if (REQUEST_ACTION === true) {
         game.determinePlayerAction();
     }
     if (REQUEST_MOVE === true) {
         game.player.directionalMove(savedUnitVectorX, savedUnitVectorY, targetX);
         resetActionRequests();
-        return;
+        // return;
     }
     if (REQUEST_UP === true) {
         game.player.jump();
@@ -100,10 +101,10 @@ function resetActionRequests() {
 }
 
 function resetAllRequests() {
-    // REQUEST_UP     = false
-    // REQUEST_DOWN   = false
-    // REQUEST_RIGHT  = false
-    // REQUEST_LEFT   = false
+    REQUEST_UP     = false
+    REQUEST_DOWN   = false
+    REQUEST_RIGHT  = false
+    REQUEST_LEFT   = false
     REQUEST_JUMP   = false
     REQUEST_GRAB   = false
     REQUEST_ACTION = false
@@ -407,6 +408,45 @@ function addClickEventListener(canvas, player) {
 
 
 // __________________________________________________________________
+//      Game Pad API Controls
+// ==================================================================
+
+window.addEventListener("gamepadconnected", function(e) {
+    console.log(
+        "Gamepad connected at index %d: %s. %d buttons, %d axes.",
+        e.gamepad.index, e.gamepad.id,
+        e.gamepad.buttons.length, e.gamepad.axes.length
+    );
+});
+
+window.addEventListener("gamepaddisconnected", function(e){
+    console.log("Gamepad has been disconnected.")
+});
+
+function gamepadLoop(game) {
+    if (navigator.getGamepads().length !== 1) {
+        return;
+    }
+    let gp = navigator.getGamepads()[0];
+    let moveX = gp.axes[0];
+    let moveY = gp.axes[1];
+    let pressA = gp.buttons[0].pressed;
+    let pressB = gp.buttons[1].pressed;
+    let pressX = gp.buttons[2].pressed;
+    let pressY = gp.buttons[3].pressed;
+    if (moveX < -0.5) {
+        game.player.moveLeft();
+    }
+    if (moveX > 0.5) {
+        game.player.moveRight();
+    }
+    if ((moveY < -0.5) || pressA || pressB || pressX || pressY) {
+        game.player.jump();
+    }
+}
+
+
+// __________________________________________________________________
 //      GameController Public Interfaces
 // ==================================================================
 
@@ -436,6 +476,7 @@ return {
     draw,
     touchTime,
     resetAllRequests,
+    gamepadLoop,
 }
 
 }());

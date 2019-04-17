@@ -20,6 +20,8 @@ const MAX_BALLOON_LIFE  = 140;  // in # of frames
 const BALLOON_RADIUS    = 100;  // pixels per frame
 const BALLOON_RISING    = 5;    // pixels per frame: how fast the ballon rises
 
+const EASY_MIN_BALLOON_LIFE = 80;
+
 const MIN_BALLOON_INTERVAL = 100
 const MAX_BALLON_INTERVAL  = 400
 
@@ -78,7 +80,7 @@ class Balloon {
      * @param {Number} y middle of balloon (also y-axis of string.)
      * @param {Number} r radius of the balloon
      */
-    constructor(x, y, r) {
+    constructor(x, y, r, easyMode) {
         this.type = 'Balloon';
         this.x = x;
         this.y = y;
@@ -89,7 +91,11 @@ class Balloon {
         this.has_popped = false;
         this.rising_speed = BALLOON_RISING;
         this.min_altitude = this.altitude;
-        this.max_altitude = this.altitude + randbetween(MIN_BALLOON_LIFE, MAX_BALLOON_LIFE) * this.rising_speed;
+        if (easyMode === true) {
+            this.max_altitude = this.altitude + randbetween(EASY_MIN_BALLOON_LIFE, MAX_BALLOON_LIFE) * this.rising_speed;
+        } else {
+            this.max_altitude = this.altitude + randbetween(MIN_BALLOON_LIFE, MAX_BALLOON_LIFE) * this.rising_speed;
+        }
     }
 
     step() {
@@ -801,9 +807,9 @@ class Game {
                 r += buff;
             }
         }
-        GameObjectManager.add(new Balloon(
-            r, -3*BALLOON_RADIUS, BALLOON_RADIUS
-        ))
+        let easymode = (this.score < 100);
+        let nextBalloon = new Balloon(r, -3*BALLOON_RADIUS, BALLOON_RADIUS, easymode);
+        GameObjectManager.add(nextBalloon)
         // this.makeRandBalloon(2*BALLOON_RADIUS, 1000-BALLOON_RADIUS)
     }
 }

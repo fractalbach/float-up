@@ -401,10 +401,6 @@ function whenClicked(event) {
     ClickSpotTracker.addClickLocation(x, y);
 };
 
-function addClickEventListener(canvas, player) {
-    canvas.addEventListener('click', whenClicked);
-}
-
 
 
 // __________________________________________________________________
@@ -462,7 +458,7 @@ function init(player) {
     myPlayer = player;
     document.addEventListener("keyup", whenKeyGoesUp);
     document.addEventListener("keydown", whenKeyGoesDown);
-    // addClickEventListener(canvas, player);
+    canvas.addEventListener('mousedown', whenClicked);
     addControlEventListeners(canvas);
 }
 

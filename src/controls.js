@@ -101,10 +101,10 @@ function resetActionRequests() {
 }
 
 function resetAllRequests() {
-    REQUEST_UP     = false
-    REQUEST_DOWN   = false
-    REQUEST_RIGHT  = false
-    REQUEST_LEFT   = false
+    // REQUEST_UP     = false
+    // REQUEST_DOWN   = false
+    // REQUEST_RIGHT  = false
+    // REQUEST_LEFT   = false
     REQUEST_JUMP   = false
     REQUEST_GRAB   = false
     REQUEST_ACTION = false

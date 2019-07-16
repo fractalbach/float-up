@@ -1,0 +1,138 @@
+const InputController = (function(){
+
+    let UP    = false;
+    let DOWN  = false;
+    let LEFT  = false;
+    let RIGHT = false;
+    let SPACE = false;
+
+    let TAP = [0,0];        // The most recently TAPPED location.
+    let TAPVALID = false;  // Indicates that TAP should be used.
+
+    let isMouseDown = false;
+    let isTouchDown = false;
+
+    let player = null;
+    let canvas = null;
+
+    function reset() {
+        // UP = false;
+        // DOWN = false;
+        // LEFT = false;
+        // RIGHT = false;
+        // SPACE = false;
+        TAPVALID = false;
+    }
+
+    function getData() {
+        TAPVALID = ((isTouchDown === true) || (isMouseDown === true));
+        return {
+            up: UP,
+            down: DOWN,
+            left: LEFT,
+            right: RIGHT,
+            space: SPACE,
+            tapvalid: TAPVALID,
+            tapx: TAP[0],
+            tapy: TAP[1],
+        }
+    }
+
+    function init(_player, _canvas) {
+        player = _player;
+        canvas = _canvas;
+        document.addEventListener("keyup", whenKeyGoesUp);
+        document.addEventListener("keydown", whenKeyGoesDown);
+        canvas.addEventListener('mousedown', whenMouseDown);
+        canvas.addEventListener('mousemove', whenMouseMove);
+        canvas.addEventListener('mouseup', whenMouseUp);
+        canvas.addEventListener("touchstart" , whenTouchStarts);
+        canvas.addEventListener("touchmove"  , whenTouchMoves);
+        canvas.addEventListener("touchend"   , whenTouchEnds);
+        canvas.addEventListener("touchcancel", whenTouchCancels);
+    }
+
+    function whenKeyGoesDown(event) {
+        switch (event.code) {
+            case 'ArrowUp':     UP    = true; return;
+            case 'ArrowDown':   DOWN  = true; return;
+            case 'ArrowLeft':   LEFT  = true; return;
+            case 'ArrowRight':  RIGHT = true; return;
+            case 'Space':       SPACE = true; return;
+        }
+    }
+
+    function whenKeyGoesUp(event) {
+        switch (event.code) {
+            case 'ArrowUp':     UP    = false; return;
+            case 'ArrowDown':   DOWN  = false; return;
+            case 'ArrowLeft':   LEFT  = false; return;
+            case 'ArrowRight':  RIGHT = false; return;
+            case 'Space':       SPACE = false; return;
+        }
+    }
+
+    function whenTouchStarts(event) {
+        event.preventDefault();
+        isTouchDown = true;
+        setTapValueFromEvent(event.touches[0]);
+    }
+
+    function whenTouchMoves(event) {
+        setTapValueFromEvent(event.touches[0]);
+    }
+
+    function whenTouchEnds(event) {
+        isTouchDown = false;
+    }
+
+    function whenTouchCancels(event) {
+        isTouchDown = false;
+    }
+
+    function whenMouseDown(event) {
+        isMouseDown = true;
+        setTapValueFromEvent(event);
+    }
+
+    function whenMouseMove(event) {
+        if (isMouseDown === true) { setTapValueFromEvent(event); }
+    }
+
+    function whenMouseUp(event) {
+        isMouseDown = false;
+    }
+
+    function setTapValueFromEvent(event) {
+        let [x,y] = convertToCanvasPosition(canvas, event);
+        displayTap(x, y);
+        // [x,y] = convertToRelativePlayerPosition(x, y);
+        TAP[0] = x;
+        TAP[1] = y;
+        TAPVALID = true;
+    }
+
+    function convertToCanvasPosition(canvas, event) {
+        let rect = canvas.getBoundingClientRect();
+        let x = (event.clientX - rect.left) * 1000 / rect.width;
+        let y = (event.clientY - rect.top) * 1000 / rect.height;
+        return [x, y];
+    }
+
+    function convertToRelativePlayerPosition(x, y) {
+        let rx = x - (player.x + player.w/2)
+        let ry = y - (player.y + player.h/2)
+        return [rx, ry];
+    }
+
+    function displayTap(x, y) {
+        TapLocationDebugger.addLocation(x, y);
+    }
+
+    return {
+        init,
+        reset,
+        getData,
+    }
+
+}());

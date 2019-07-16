@@ -57,10 +57,12 @@ function getMousePos(canvas, clickEvent) {
 
 
 // make a request to move in a specific direction.
-function requestDirectionalMove(unitVectorX, unitVectorY, x) {
+function requestDirectionalMove(unitVectorX, unitVectorY, x, dx, dy) {
     REQUEST_MOVE = true;
     savedUnitVectorX = unitVectorX;
     savedUnitVectorY = unitVectorY;
+    saveddx = dx;
+    saveddy = dy;
     targetX = x;
 }
 
@@ -73,7 +75,7 @@ function processInputsAndStep(game) {
         game.determinePlayerAction();
     }
     if (REQUEST_MOVE === true) {
-        game.player.directionalMove(savedUnitVectorX, savedUnitVectorY, targetX);
+        game.player.directionalMove(savedUnitVectorX, savedUnitVectorY, targetX, saveddx, saveddy);
         resetActionRequests();
         // return;
     }
@@ -396,8 +398,9 @@ function whenClicked(event) {
     let dx = x - playerCenterX;
     let dy = y - playerCenterY;
     let [uvx, uvy] = unitVector(dx, dy);
-    requestDirectionalMove(uvx, uvy, x);
+    requestDirectionalMove(uvx, uvy, x, dx, dy);
     REQUEST_ACTION = true;
+    // GAME.player.specialJump(dx, dy);
     ClickSpotTracker.addClickLocation(x, y);
 };
 

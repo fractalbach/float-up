@@ -9,10 +9,11 @@ const GAME_WIDTH        = 1000;
 const GAME_HEIGHT       = 1000;
 const SCREEN_MIDDLE     = 400;
 
-const MAX_PLAYER_SPEED  = 8;    // player's vx max
+const MAX_PLAYER_SPEED  = 10;   // player's vx max
 const MAX_JUMP_SPEED    = 20;   // player's vy max
 const TERMINAL_VELOCITY = 10;   // can't fall faster than TERMINAL_VELOCITY.
-const GRAVITY_VELOCITY  = 0.5;  // yes, in this game, gravity is a velocity.
+const GRAVITY = 0.4;
+const V_MAX = 10;
 
 const FEEDBACK_BUFFER   = 20;   // in # of frames
 const MIN_BALLOON_LIFE  = 30;  // in # of frames
@@ -207,6 +208,21 @@ class Player {
         }
     }
 
+    specialJump(x, y) {
+        // let v = V_MAX;
+        // let g = GRAVITY;
+        // let vo = NEWJUMP.calculateInitialVelocity(v, g, x, -y);
+        // this.vx = vo[0];
+        // if (this.vx > MAX_PLAYER_SPEED) { this.vx = MAX_PLAYER_SPEED }
+        if ((this.y > 0) && (this.isFalling !== true)) {
+            // this.vy = -vo[1];
+            this.anim = ANIM_JUMP;
+            this.isFalling = true;
+            this.isGrabbing = false;
+            this.cooldown = 10;
+        }
+    }
+
     grab(balloon) {
         // this.y = balloon.y;
         // console.log("grab!")
@@ -220,21 +236,35 @@ class Player {
     }
 
     moveLeft() {
-        if (this.x > 0) {
-            this.vx = -MAX_PLAYER_SPEED;
-        }
-        if (this.isGrabbing === true) {
-            this.x += this.vx;
-        }
+        if (this.x < 0) { return; }
+        this.vx = 0;
+        this.x -= MAX_PLAYER_SPEED;
+        this.vx = -MAX_PLAYER_SPEED /2
+        return;
+        // if (this.isGrabbing === true) {
+        // }
+        // if (this.x > 0) {
+        //     if (this.vx > 0) { this.vx = 0; }
+        //     this.vx -= (MAX_PLAYER_SPEED/10)
+        //     if (this.vx < -MAX_PLAYER_SPEED) { this.vx = -MAX_PLAYER_SPEED; }
+        // }
     }
 
     moveRight() {
-        if (this.x < GAME_WIDTH - this.w) {
-            this.x += MAX_PLAYER_SPEED
-            // this.vx = MAX_PLAYER_SPEED;
-        }
+        if (this.x > GAME_WIDTH - this.w) { return; }
+        this.vx = 0;
+        this.x += MAX_PLAYER_SPEED;
+        this.vx = MAX_PLAYER_SPEED / 2;
+        return;
         // if (this.isGrabbing === true) {
-        //     this.x += this.vx;
+        //     this.x += MAX_PLAYER_SPEED;
+        //     return;
+        // }
+        // if (this.x < GAME_WIDTH - this.w) {
+        //     // this.x += MAX_PLAYER_SPEED
+        //     if (this.vx < 0) { this.vx = 0; }
+        //     this.vx += (MAX_PLAYER_SPEED/10)
+        //     if (this.vx > MAX_PLAYER_SPEED) { this.vx = MAX_PLAYER_SPEED; }
         // }
     }
 
@@ -242,12 +272,18 @@ class Player {
 
     moveDown() {}
 
-    directionalMove(unitVectorX, unitVectorY, lastX) {
+    directionalMove(unitVectorX, unitVectorY, lastX, dx, dy) {
         this.jump(unitVectorY);
         if (Math.abs((this.x + this.w/2) - lastX) < MAX_PLAYER_SPEED) {
             return;
         }
+        if (dx) {
+            let multiplier = Math.abs(dx) / 200
+            if (multiplier > 1) { multiplier = 1}
+            unitVectorX = unitVectorX * multiplier
+        }
         let move = unitVectorX * MAX_PLAYER_SPEED;
+        // if (dx === null) { dx = GAME_WIDTH/2; }
         if (((move < 0) && (this.x + move > 0)) ||
             ((move > 0) && (this.x + move < GAME_WIDTH - this.w))
         ){
@@ -257,13 +293,10 @@ class Player {
     }
 
     step() {
-        // this.doFriction();
+        this.handleInputData();
         if (this.isGrabbing === true) {
-            // check to see if the balloon has popped.
             if (this.myBalloon.hasPopped() === false) {
-                // rise with the balloon
                 this.y -= this.myBalloon.rising_speed;
-                // check if you are still holding onto the balloon
                 if (GameObjectManager.hasCollision(this, this.myBalloon)) {
                     return;
                 }
@@ -272,6 +305,24 @@ class Player {
             this.myBalloon = undefined;
             this.isGrabbing = false;
         }
+        if (this.cooldown <= 0) {
+            let collisions = GameObjectManager.findCollisionsWith(this);
+            if (collisions.length > 0) {
+                this.grab(collisions[0])
+                return;
+            }
+        }
+        if (this.cooldown > 0) {
+            this.cooldown--
+        }
+        // this._doFriction();
+        this._doGravity();
+        this._stepY();
+        this._stepX();
+    }
+
+    _stepY() {
+        this.y += this.vy;
         if ((this.y + this.vy) > (GAME_HEIGHT - this.h)) {
             // hurray! you aren't falling.
             this.y = GAME_HEIGHT - this.h + 1
@@ -279,25 +330,6 @@ class Player {
             this.isFalling = false;
             this.anim = ANIM_STAND;
         }
-        if (this.cooldown <= 0) {
-            let collisions = GameObjectManager.findCollisionsWith(this);
-            if (collisions.length > 0) {
-                this.grab(collisions[0])
-                GameController.resetAllRequests();
-                return;
-            }
-        }
-        if (this.cooldown > 0) {
-            this.cooldown--
-        }
-        this._doGravity();
-        this._stepY()
-        this._doFriction();
-        this._stepX();
-    }
-
-    _stepY() {
-        this.y += this.vy;
     }
 
     _stepX() {
@@ -308,11 +340,11 @@ class Player {
         }
     }
 
-    _doGravity() {
-        if (this.vy < TERMINAL_VELOCITY) {
-            this.vy += GRAVITY_VELOCITY
-        }
-    }
+    _doGravity() { this.vy += GRAVITY; }
+
+    // _doGravity() {
+    //     if (this.vy < TERMINAL_VELOCITY) { this.vy += GRAVITY; }
+    // }
 
     _doFriction() {
         let s = Math.sign(this.vx)
@@ -323,6 +355,31 @@ class Player {
         } else {
             this.vx = s * next;
         }
+    }
+
+    handleInputData() {
+        let data = InputController.getData();
+        if (data.tapvalid === true) {
+            this.handleTapInput(data);
+        } else {
+            this.handleKeyboardInput(data);
+        }
+        InputController.reset();
+    }
+
+    handleTapInput(data) {
+        let dx = data.tapx - (this.x + this.w/2)   // HANDLE X DIRECTION
+        if (dx < -20) { this.moveLeft(); }
+        else if (dx > 20) { this.moveRight(); }
+        else { this.vx = 0; }
+        let dy = data.tapy - (this.y + this.h/2)   // HANDLE Y DIRECTION
+        if (dy < -50) { this.jump(); }
+    }
+
+    handleKeyboardInput(data) {
+        if (data.left === true) { this.moveLeft(); }
+        if (data.right === true) { this.moveRight(); }
+        if ((data.space === true)||(data.up === true)) { this.jump(); }
     }
 
     lowX(){return this.x}
@@ -632,7 +689,6 @@ const STATE_FALL  = 202;
 class Game {
     constructor() {
         this.player       = new Player(SCREEN_MIDDLE + 10, GAME_HEIGHT - 150, 100, 150)
-        this.controller   = GameController
         this.score        = 0;
         this.highestScore = 0;
         this.state        = STATE_ON;
@@ -645,7 +701,8 @@ class Game {
         this.savedLastTime;
         this.lastNewBalloonAltitude = currentAltitude;
         this.nextBallonInterval = randbetween(MIN_BALLOON_INTERVAL, MAX_BALLON_INTERVAL);
-        this.controller.init(this.player);
+        TapLocationDebugger.init(canvas);
+        InputController.init(this.player, canvas);
         this.initDebugger()
     }
 
@@ -672,8 +729,7 @@ class Game {
             this._doFallingAnimation();
             return;
         }
-        //
-        GameController.processInputsAndStep(this);
+        // GameController.processInputsAndStep(this);
         this.player.step();
         GameObjectManager.forEach((balloon)=>{
             balloon.step();
@@ -720,7 +776,6 @@ class Game {
         this.fallAnim.iter = 0;
         this.player.anim = ANIM_JUMP;
         this.fallAnim.saved_background = canvas.style.background;
-        GameController.resetAllRequests();
         q('#endgame_score').innerText = this.savedLastScore;
         q('#endgame_message').classList.remove('hidden');
         // q('#score_prompt_score_txt').innerText = this.savedLastScore;
@@ -755,10 +810,8 @@ class Game {
     }
 
     drawScreen() {
-        GameController.draw();
-        // draw the player.
+        TapLocationDebugger.draw();
         drawPlayerBoundingBox(ctx, this.player);
-        // draw each of the objects onto the screen.
         GameObjectManager.forEach(function(object){
             GameView.draw(object);
             drawBoundingBox(ctx, object);
@@ -767,7 +820,6 @@ class Game {
     }
 
     clearScreen() {
-        // GameController.clearOverlay();
         clearCanvas(ctx);
     }
 
@@ -778,11 +830,19 @@ class Game {
     initDebugger() {
         Debugger.add('high', 'Highest');
         Debugger.add('score', 'Score');
+        Debugger.add('vx', 'vx');
+        Debugger.add('vy', 'vy');
+        Debugger.add('fixedSteps', 'Steps/Frame');
+        // Debugger.add('occurencesOfTooSlow', 'occurencesOfTooSlow')
+        Debugger.add('stepsPerSecond', 'Steps/Sec')
+        Debugger.add('actual_step_duration', 'ms/Step')
     }
 
     updateDebugger() {
         Debugger.set('high', this.highestScore);
         Debugger.set('score', this.score);
+        Debugger.set('vx', GAME.player.vx.toFixed(2));
+        Debugger.set('vy', GAME.player.vy.toFixed(2));
     }
     //
     // makeRandBalloon(minX, maxX) {
@@ -827,7 +887,7 @@ function main() {
     GAME = game;
 
     // __________________________________________________________________
-    //      Game Loop
+    //      Original Game Loop
     // ==================================================================
     function loop() {
         game.clearScreen();
@@ -837,7 +897,59 @@ function main() {
         window.requestAnimationFrame(loop);
     }
 
-    window.requestAnimationFrame(loop);
+    function sleep(milliseconds) {
+        let start = new Date().getTime();
+        for (let i = 0; i < 1e7; i++) {
+            if ((new Date().getTime() - start) > milliseconds) { break; }
+        }
+    }
+
+    // __________________________________________________________________
+    //      Better Game Loop
+    // ==================================================================
+    let t0 = performance.now()
+    let t1 = performance.now()
+    let diff = t1 - t0;
+    let nStepsPrev = 0;
+    let nSteps = 0;
+    const DESIRED_STEP_DURATION = 15;
+    let start_step_time = 0;
+    let actual_step_duration = 0;
+    const TOO_MANY_NSTEPS = 20;    // used for epic framerate fail mitigation.
+    let nStepsIncreased = 0;
+    let occurencesOfTooSlow = 0; // tracks epic framerate fails
+    let totalSteps = 0;
+    let startTime = performance.now()
+    let stepsPerUnitTime = 0;
+    function BETTERloop() {
+        t1 = performance.now();
+        nStepsPrev = nSteps;
+        nSteps = Math.floor( (t1 - t0) / DESIRED_STEP_DURATION );
+        if (nSteps < 0) { nSteps = 0; }
+        totalSteps += nSteps;
+        if ((nSteps > TOO_MANY_NSTEPS) && (nStepsPrev > TOO_MANY_NSTEPS)) { occurencesOfTooSlow++ };
+        if (occurencesOfTooSlow > 5) {
+            console.warn("Abandon Ship! We are moving to a simpler animation loop!")
+            return window.requestAnimationFrame(loop);
+        }
+        // Debugger.set('occurencesOfTooSlow', occurencesOfTooSlow)
+        for (let i = 0; i < nSteps; i++) {
+            start_step_time = performance.now();
+            game.step();
+            //sleep(10);
+            actual_step_duration = performance.now() - start_step_time;
+            Debugger.set('actual_step_duration', actual_step_duration.toFixed(2))
+        }
+        if (nSteps > 0) { t0 += DESIRED_STEP_DURATION * nSteps; }
+        stepsPerUnitTime = totalSteps / ((performance.now() - startTime)/1000)
+        Debugger.set('stepsPerSecond', Math.floor(stepsPerUnitTime))
+        Debugger.set('fixedSteps', nSteps)
+        game.clearScreen();
+        game.drawScreen();
+        game.updateDebugger();
+        window.requestAnimationFrame(BETTERloop);
+    }
+    window.requestAnimationFrame(BETTERloop);
 }
 
 

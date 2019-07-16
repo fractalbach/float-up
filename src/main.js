@@ -239,7 +239,7 @@ class Player {
         if (this.x < 0) { return; }
         this.vx = 0;
         this.x -= MAX_PLAYER_SPEED;
-        this.vx = -MAX_PLAYER_SPEED /2
+        this.vx = -MAX_PLAYER_SPEED /4
         return;
         // if (this.isGrabbing === true) {
         // }
@@ -254,7 +254,7 @@ class Player {
         if (this.x > GAME_WIDTH - this.w) { return; }
         this.vx = 0;
         this.x += MAX_PLAYER_SPEED;
-        this.vx = MAX_PLAYER_SPEED / 2;
+        this.vx = MAX_PLAYER_SPEED / 4;
         return;
         // if (this.isGrabbing === true) {
         //     this.x += MAX_PLAYER_SPEED;
@@ -373,7 +373,7 @@ class Player {
         else if (dx > 20) { this.moveRight(); }
         else { this.vx = 0; }
         let dy = data.tapy - (this.y + this.h/2)   // HANDLE Y DIRECTION
-        if (dy < -50) { this.jump(); }
+        if ((data.requestjump === true)||(dy < -50)) { this.jump(); }
     }
 
     handleKeyboardInput(data) {

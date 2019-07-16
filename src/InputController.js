@@ -5,12 +5,14 @@ const InputController = (function(){
     let LEFT  = false;
     let RIGHT = false;
     let SPACE = false;
-
+    let REQUESTJUMP = false;
     let TAP = [0,0];        // The most recently TAPPED location.
     let TAPVALID = false;  // Indicates that TAP should be used.
 
     let isMouseDown = false;
     let isTouchDown = false;
+    const tapdelay = 250;
+    let tapstart = 0;
 
     let player = null;
     let canvas = null;
@@ -35,6 +37,7 @@ const InputController = (function(){
             tapvalid: TAPVALID,
             tapx: TAP[0],
             tapy: TAP[1],
+            requestjump: REQUESTJUMP
         }
     }
 
@@ -51,6 +54,10 @@ const InputController = (function(){
         canvas.addEventListener("touchend"   , whenTouchEnds);
         canvas.addEventListener("touchcancel", whenTouchCancels);
     }
+
+    // __________________________________________________________________
+    //      Keyboard
+    // ==================================================================
 
     function whenKeyGoesDown(event) {
         switch (event.code) {
@@ -72,10 +79,15 @@ const InputController = (function(){
         }
     }
 
+    // __________________________________________________________________
+    //      Touch
+    // ==================================================================
+
     function whenTouchStarts(event) {
         event.preventDefault();
-        isTouchDown = true;
         setTapValueFromEvent(event.touches[0]);
+        isTouchDown = true;
+        tapstart = performance.now();
     }
 
     function whenTouchMoves(event) {
@@ -83,6 +95,7 @@ const InputController = (function(){
     }
 
     function whenTouchEnds(event) {
+        REQUESTJUMP = ((performance.now() - tapstart) < tapdelay)
         isTouchDown = false;
     }
 
@@ -90,9 +103,14 @@ const InputController = (function(){
         isTouchDown = false;
     }
 
+    // __________________________________________________________________
+    //      Mouse
+    // ==================================================================
+
     function whenMouseDown(event) {
         isMouseDown = true;
         setTapValueFromEvent(event);
+        tapstart = performance.now();
     }
 
     function whenMouseMove(event) {
@@ -101,7 +119,12 @@ const InputController = (function(){
 
     function whenMouseUp(event) {
         isMouseDown = false;
+        REQUESTJUMP = ((performance.now() - tapstart) < tapdelay)
     }
+
+    // __________________________________________________________________
+    //      Other functions
+    // ==================================================================
 
     function setTapValueFromEvent(event) {
         let [x,y] = convertToCanvasPosition(canvas, event);

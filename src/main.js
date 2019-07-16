@@ -15,6 +15,9 @@ const TERMINAL_VELOCITY = 10;   // can't fall faster than TERMINAL_VELOCITY.
 const GRAVITY = 0.4;
 const V_MAX = 10;
 
+const MAX_GRAB_COOLDOWN  = 20;
+const MAX_JUMP_COOLDOWN  = 40;
+
 const FEEDBACK_BUFFER   = 20;   // in # of frames
 const MIN_BALLOON_LIFE  = 30;  // in # of frames
 const MAX_BALLOON_LIFE  = 140;  // in # of frames
@@ -195,16 +198,19 @@ class Player {
         this.myBalloon = undefined;
         this.friction = 0.5;
         this.altitude = 0;
-        this.cooldown = 0;
+        this.grabCooldown = 0;
+        this.jumpCooldown = 0;
     }
 
     jump(unitVectorY) {
+        if (this.jumpCooldown > 0) { return; }
         if ((this.y > 0) && (this.isFalling !== true)) {
             this.anim = ANIM_JUMP;
             this.vy = -MAX_JUMP_SPEED;
             this.isFalling = true;
             this.isGrabbing = false;
-            this.cooldown = 20;
+            this.grabCooldown = MAX_GRAB_COOLDOWN;
+            this.jumpCooldown = MAX_JUMP_COOLDOWN;
         }
     }
 
@@ -219,7 +225,8 @@ class Player {
             this.anim = ANIM_JUMP;
             this.isFalling = true;
             this.isGrabbing = false;
-            this.cooldown = 10;
+            this.grabCooldown = MAX_GRAB_COOLDOWN;
+            this.jumpCooldown = MAX_JUMP_COOLDOWN;
         }
     }
 
@@ -294,6 +301,7 @@ class Player {
 
     step() {
         this.handleInputData();
+        if (this.jumpCooldown > 0) { this.jumpCooldown-- }
         if (this.isGrabbing === true) {
             if (this.myBalloon.hasPopped() === false) {
                 this.y -= this.myBalloon.rising_speed;
@@ -305,16 +313,14 @@ class Player {
             this.myBalloon = undefined;
             this.isGrabbing = false;
         }
-        if (this.cooldown <= 0) {
+        if (this.grabCooldown <= 0) {
             let collisions = GameObjectManager.findCollisionsWith(this);
             if (collisions.length > 0) {
                 this.grab(collisions[0])
                 return;
             }
         }
-        if (this.cooldown > 0) {
-            this.cooldown--
-        }
+        if (this.grabCooldown > 0) { this.grabCooldown-- }
         // this._doFriction();
         this._doGravity();
         this._stepY();

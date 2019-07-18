@@ -8,6 +8,7 @@ const InputController = (function(){
     let REQUESTJUMP = false;
     let TAP = [0,0];        // The most recently TAPPED location.
     let TAPVALID = false;  // Indicates that TAP should be used.
+    let TAPSTART = false;  // Indicates the first TAP in a series of TAPs.
 
     let isMouseDown = false;
     let isTouchDown = false;
@@ -18,13 +19,9 @@ const InputController = (function(){
     let canvas = null;
 
     function reset() {
-        // UP = false;
-        // DOWN = false;
-        // LEFT = false;
-        // RIGHT = false;
-        // SPACE = false;
         TAPVALID = false;
         REQUESTJUMP = false;
+        TAPSTART = false;
     }
 
     function getData() {
@@ -105,7 +102,7 @@ const InputController = (function(){
     }
 
     function whenTouchEnds(event) {
-        REQUESTJUMP = ((performance.now() - tapstart) < tapdelay)
+        // REQUESTJUMP = ((performance.now() - tapstart) < tapdelay)
         isTouchDown = false;
     }
 
@@ -129,7 +126,7 @@ const InputController = (function(){
 
     function whenMouseUp(event) {
         isMouseDown = false;
-        REQUESTJUMP = ((performance.now() - tapstart) < tapdelay)
+        // REQUESTJUMP = ((performance.now() - tapstart) < tapdelay)
     }
 
     // __________________________________________________________________

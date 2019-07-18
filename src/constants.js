@@ -12,9 +12,6 @@ const TERMINAL_VELOCITY = 10;   // can't fall faster than TERMINAL_VELOCITY.
 const GRAVITY = 0.4;
 const V_MAX = 10;
 
-const MAX_GRAB_COOLDOWN  = 20;
-const MAX_JUMP_COOLDOWN  = 20;
-
 const FEEDBACK_BUFFER   = 20;   // in # of frames
 const MIN_BALLOON_LIFE  = 30;  // in # of frames
 const MAX_BALLOON_LIFE  = 140;  // in # of frames

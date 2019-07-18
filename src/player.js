@@ -3,8 +3,10 @@
 // ==================================================================
 const Player = (function(){
 
-
-MAX_HITPOINTS = 0;
+const MAX_HITPOINTS = 0;
+const MAX_GRAB_COOLDOWN  = 20;
+const MAX_JUMP_COOLDOWN  = 10;
+const MAX_JUMP_UP_COUNTER = 19;
 
 /**
  * player is the class object of the main player.
@@ -38,6 +40,7 @@ class Player {
         this.grabCooldown = 0;
         this.jumpCooldown = 0;
         this.hitpoints = MAX_HITPOINTS;
+        this.jumpUpCounter = 0;
     }
 
     jump(unitVectorY) {
@@ -63,6 +66,7 @@ class Player {
         this.myBalloon = balloon;
         balloon.touch();
         this.jumpCooldown = MAX_JUMP_COOLDOWN;
+        this.jumpUpCounter = 0;
     }
 
     moveLeft() {
@@ -83,10 +87,27 @@ class Player {
         // else { this.vx = MAX_PLAYER_SPEED; }
     }
 
-    moveUp() {}
+    moveUp() {
+        if (this.isGrabbing === true) {
+            this.y -= MAX_JUMP_SPEED/2
+            return;
+        }
+        this.jumpUpCounter++;
+        if (this.jumpUpCounter < MAX_JUMP_UP_COUNTER) {
+            this.y -= MAX_JUMP_SPEED;
+            this.vy = 0;
+        }
+        if (this.jumpUpCounter === MAX_JUMP_UP_COUNTER) {
+            this.vy = -MAX_JUMP_SPEED/2
+        }
+    }
 
     moveDown() {
-        this.y += MAX_PLAYER_SPEED / 4;
+        if (this.isGrabbing === true) {
+            this.y += MAX_JUMP_SPEED/2;
+            return;
+        }
+        this.y += MAX_JUMP_SPEED;
     }
 
     specialMove(dx) {
@@ -117,10 +138,11 @@ class Player {
 
     step() {
         this.handleInputData();
+        this._handleCollisions();
         if (this.jumpCooldown > 0) { this.jumpCooldown-- }
         if (this.isGrabbing === true) {
+            this.jumpUpCounter = 0;
             if (this.myBalloon.hasPopped() === false) {
-
                 if (GameObjectManager.hasCollision(this, this.myBalloon)) {
                     this.y -= this.myBalloon.rising_speed;
                     this.vx = 0;
@@ -135,14 +157,13 @@ class Player {
             this.jumpCooldown = 0;
             this.grabCooldown = 0;
         }
-        this._handleCollisions();
+
         if (this.grabCooldown > 0) { this.grabCooldown-- }
         // this._doFriction();
         this._doGravity();
         this._stepY();
         this._stepX();
     }
-
     _handleCollisions() {
         let collisions = GameObjectManager.findCollisionsWith(this);
         let gotHitByEnemey = false;
@@ -150,10 +171,14 @@ class Player {
             if (other.type === OBJ_TYPE_ENEMY) {
                 this._getRekt();
                 gotHitByEnemey = true;
+                return
             }
         }
         if (gotHitByEnemey === false) {
             this._resetHitpoints();
+        }
+        if (this.isGrabbing === true) {
+            return;
         }
         for (let other of collisions) {
             if (other.type === OBJ_TYPE_BALLOON) {
@@ -167,7 +192,9 @@ class Player {
     _getRekt() {
         this.hitpoints--;
         if (this.hitpoints > 0) { return; }
-        this.y = GAME_HEIGHT + 1;
+        this.y += MAX_JUMP_SPEED
+        this.vy = MAX_JUMP_SPEED
+        // this.y = GAME_HEIGHT + 1;
         return;
     }
 
@@ -183,6 +210,7 @@ class Player {
         this.vy = 0;
         this.isFalling = false;
         this.anim = ANIM_STAND;
+        this.jumpUpCounter = 0;
 
     }
 
@@ -224,16 +252,29 @@ class Player {
 
     handleTapInput(data) {
         let dx = data.tapx - (this.x + this.w/2)   // HANDLE X DIRECTION
-        if (dx < -20) { this.moveLeft(); }
-        else if (dx > 20) { this.moveRight(); }
-        else { this.vx = 0; }
+        if (dx < -20) {
+            this.moveLeft();
+        }
+        else if (dx > 20) {
+            this.moveRight();
+        }
+        else {
+            this.vx = 0;
+        }
         let dy = data.tapy - (this.y + this.h/2)   // HANDLE Y DIRECTION
-        if ((dy < -50)) { this.jump(); }
+        if ((dy < -50)) {
+            this.jump();
+        }
+        // if ((dy > -20) && (dy < 20) && (this.vy < 0)) {
+        //     this.vy = 0
+        // }
     }
 
     handleKeyboardInput(data) {
         if (data.left === true) { this.moveLeft(); }
         if (data.right === true) { this.moveRight(); }
+        if (data.down === true) { this.moveDown(); }
+        // if (data.up === true) { this.moveUp(); }
         if ((data.space === true)||(data.up === true)) { this.jump(); }
     }
 

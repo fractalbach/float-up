@@ -235,8 +235,8 @@ class Game {
         Debugger.add('high', 'Highest');
         Debugger.add('score', 'Score');
         Debugger.add('hp', 'Hitpoints');
-        // Debugger.add('vx', 'vx');
-        // Debugger.add('vy', 'vy');
+        Debugger.add('vx', 'vx');
+        Debugger.add('vy', 'vy');
         // Debugger.add('fixedSteps', 'Steps/Frame');
         // Debugger.add('occurencesOfTooSlow', 'occurencesOfTooSlow')
         // Debugger.add('stepsPerSecond', 'Steps/Sec')
@@ -247,9 +247,8 @@ class Game {
         Debugger.set('high', this.highestScore);
         Debugger.set('score', this.score);
         Debugger.set('hp', this.player.hitpoints);
-
-        // Debugger.set('vx', GAME.player.vx.toFixed(2));
-        // Debugger.set('vy', GAME.player.vy.toFixed(2));
+        Debugger.set('vx', GAME.player.vx.toFixed(2));
+        Debugger.set('vy', GAME.player.vy.toFixed(2));
     }
     //
     // makeRandBalloon(minX, maxX) {

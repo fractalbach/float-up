@@ -11,7 +11,7 @@ const InputController = (function(){
 
     let isMouseDown = false;
     let isTouchDown = false;
-    const tapdelay = 250;
+    const tapdelay = 1000;
     let tapstart = 0;
 
     let player = null;
@@ -24,6 +24,7 @@ const InputController = (function(){
         // RIGHT = false;
         // SPACE = false;
         TAPVALID = false;
+        REQUESTJUMP = false;
     }
 
     function getData() {
@@ -37,7 +38,7 @@ const InputController = (function(){
             tapvalid: TAPVALID,
             tapx: TAP[0],
             tapy: TAP[1],
-            requestjump: REQUESTJUMP
+            requestjump: REQUESTJUMP,
         }
     }
 
@@ -46,6 +47,7 @@ const InputController = (function(){
         canvas = _canvas;
         document.addEventListener("keyup", whenKeyGoesUp);
         document.addEventListener("keydown", whenKeyGoesDown);
+        canvas.addEventListener("click", whenClick);
         canvas.addEventListener('mousedown', whenMouseDown);
         canvas.addEventListener('mousemove', whenMouseMove);
         canvas.addEventListener('mouseup', whenMouseUp);
@@ -80,6 +82,14 @@ const InputController = (function(){
     }
 
     // __________________________________________________________________
+    //      Generic Click Event
+    // ==================================================================
+
+    function whenClick(event) {
+        // nothing
+    }
+
+    // __________________________________________________________________
     //      Touch
     // ==================================================================
 
@@ -100,7 +110,7 @@ const InputController = (function(){
     }
 
     function whenTouchCancels(event) {
-        isTouchDown = false;
+        whenTouchEnds();
     }
 
     // __________________________________________________________________
@@ -108,8 +118,8 @@ const InputController = (function(){
     // ==================================================================
 
     function whenMouseDown(event) {
-        isMouseDown = true;
         setTapValueFromEvent(event);
+        isMouseDown = true;
         tapstart = performance.now();
     }
 

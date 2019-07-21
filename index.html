@@ -32,10 +32,11 @@
 
         <div style="display: none;">
           <img id="img_balloon" src="img/clear/balloon.png">
-          <img id="img_grab" src="img/clear/grab.png">
-          <img id="img_jump" src="img/clear/jump.png">
-          <img id="img_stand" src="img/clear/stand.png">
+          <img id="img_grab" src="img/svg/grab.svg">
+          <img id="img_jump" src="img/svg/jump.svg">
+          <img id="img_stand" src="img/svg/stand.svg">
           <img id="img_pop" src="img/svg/pop.svg">
+          <img id="img_background" src="img/svg/forest_background.svg">
         </div>
 
         <table id="debugger">
@@ -122,21 +123,21 @@
         pointer-events: none;
     }
     table, tr, td {
-        border: thin solid black;
+        color: white;
+        /* border: thin solid black; */
     }
     table {
-        opacity: 0.8;
-        background: black;
+        background: rgba(0,0,0, 0.5);
         /* font-family: monospace; */
         /* font-family: fantasy; */
         font-family: sans-serif;
     }
     th {
-        color: white;
     }
     td {
+        color: white;
         min-width: 3em;
-        background: white;
+        /* background: rgba(255,255,255, 0.5);; */
         padding: 2px;
     }
     .red {

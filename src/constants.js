@@ -33,6 +33,7 @@ const IMG_STAND   = q("#img_stand");
 const IMG_GRAB    = q("#img_grab");
 const IMG_JUMP    = q("#img_jump");
 const IMG_POP     = q("#img_pop");
+const IMG_BACKGROUND = q("#img_background");
 
 // enums: animation
 const ANIM_STAND = 101;  // player is standing on a platform

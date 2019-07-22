@@ -121,7 +121,11 @@ const InputController = (function(){
     }
 
     function whenMouseMove(event) {
-        if (isMouseDown === true) { setTapValueFromEvent(event); }
+        // isMouseDown = true;
+        // setTapValueFromEvent(event);
+        if (isMouseDown === true) {
+            setTapValueFromEvent(event);
+        }
     }
 
     function whenMouseUp(event) {

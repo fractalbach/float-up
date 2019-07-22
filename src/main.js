@@ -105,16 +105,23 @@ class Game {
         this.highestScore = 0;
         this.state        = STATE_ON;
         this.fallAnim = {
+            MAX_ITER: 100,
             iter: 0,
             saved_background: ''
         }
         this.startTime = (new Date()).getTime()
         this.savedLastScore;
         this.savedLastTime;
+        this.savedLastAltitude;
         this.lastNewBalloonAltitude = currentAltitude;
         this.nextBallonInterval = randbetween(MIN_BALLOON_INTERVAL, MAX_BALLON_INTERVAL);
+        this.DEFAULT_ENEMY_SPACING = 500;
+        this.MIN_ENEMY_SPACING = 5;
+        this.currentEnemySpawnSpacing = this.DEFAULT_ENEMY_SPACING;
+        this.nextEnemySpawnAltitude = currentAltitude + this.DEFAULT_ENEMY_SPACING;
         TapLocationDebugger.init(canvas);
         InputController.init(this.player, canvas);
+        this.gameBackground = new GameBackground();
         this.initDebugger()
     }
 
@@ -135,19 +142,20 @@ class Game {
         }
     }
 
+    // TODO: There is too much happening here.  REFACTOR PLEASE!
     step() {
         // TODO: better state changes.
         if (this.state === STATE_FALL) {
             this._doFallingAnimation();
             return;
         }
-        // GameController.processInputsAndStep(this);
+
+        // Update Player and Game Objects
         this.player.step();
-
-
         GameObjectManager.stepAll();
         GameObjectManager.cleanOffscreenObjects();
 
+        // TODO: This should be located somewhere else in the code base.
         // delete balloons that have already poppped
         GameObjectManager.forEach((obj)=>{
             if ((obj.type === OBJ_TYPE_BALLOON) && (obj.hasPopped() === true)) {
@@ -165,17 +173,22 @@ class Game {
             this.highestScore = this.score;
         }
         if (this.player.y >= GAME_HEIGHT - this.player.h) {
-            this.savedLastScore = this.score;
-            this.savedLastTime = (new Date).getTime() - this.startTime;
-            this.score = 0;
             if (currentAltitude > SCREEN_MIDDLE + 1) {
                 this._startFallAnimation();
             }
-            currentAltitude = SCREEN_MIDDLE;
-            this.lastNewBalloonAltitude = currentAltitude;
         } else {
             this.score = Math.floor((currentAltitude - SCREEN_MIDDLE) / 100)
         }
+    }
+
+    _resetGame() {
+        this.savedLastScore = this.score;
+        this.savedLastTime = (new Date).getTime() - this.startTime;
+        this.score = 0;
+        currentAltitude = SCREEN_MIDDLE;
+        this.lastNewBalloonAltitude = currentAltitude;
+        this.currentEnemySpawnSpacing = this.DEFAULT_ENEMY_SPACING;
+        this.nextEnemySpawnAltitude = currentAltitude + this.DEFAULT_ENEMY_SPACING;
     }
 
     _startFallAnimation() {
@@ -183,6 +196,7 @@ class Game {
         this.fallAnim.iter = 0;
         this.player.anim = ANIM_JUMP;
         this.fallAnim.saved_background = canvas.style.background;
+        this.savedLastAltitude = currentAltitude;
         q('#endgame_score').innerText = this.savedLastScore;
         q('#endgame_message').classList.remove('hidden');
         // q('#score_prompt_score_txt').innerText = this.savedLastScore;
@@ -191,16 +205,15 @@ class Game {
 
     _doFallingAnimation() {
         this.fallAnim.iter++;
-        let x = 255 - 2*this.fallAnim.iter;
-        if (x > 0) { canvas.style.background = `rgb(${x},${x},${x})`; }
-        else { canvas.style.background = `rgb(0,0,0)`; }
+        currentAltitude -= (this.savedLastAltitude / this.fallAnim.MAX_ITER)
+        if (currentAltitude < SCREEN_MIDDLE) { currentAltitude = SCREEN_MIDDLE;}
         GameObjectManager.forEach((balloon)=>{
             balloon.y -= this.fallAnim.iter;
             if (balloon.y < 0) {
                 GameObjectManager.remove(balloon.id);
             }
         });
-        if (this.fallAnim.iter > 50  && GameObjectManager.size() <= 0) {
+        if (this.fallAnim.iter > this.fallAnim.MAX_ITER  && GameObjectManager.size() <= 0) {
             this._endFallAnimation();
         }
     }
@@ -211,6 +224,7 @@ class Game {
         canvas.style.background = this.fallAnim.saved_background;
         q('#endgame_message').classList.add('hidden');
         this.startTime = (new Date()).getTime()
+        this._resetGame();
     }
 
     _drawBackground() {
@@ -225,7 +239,8 @@ class Game {
     }
 
     drawScreen() {
-        this._drawBackground();
+        // this._drawBackground();
+        this.gameBackground.draw(ctx);
         TapLocationDebugger.draw();
         drawPlayerBoundingBox(ctx, this.player);
         GameObjectManager.forEach(function(object){
@@ -296,8 +311,18 @@ class Game {
         if (currentAltitude - this.lastNewBalloonAltitude > this.nextBallonInterval) {
             this.nextBallonInterval = randbetween(MIN_BALLOON_INTERVAL, MAX_BALLON_INTERVAL);
             this.makeRandBalloonAtTopOfScreen();
-            if (Math.random() < 0.3) { this._generateEnemy(); }
             this.lastNewBalloonAltitude = currentAltitude;
+        }
+        if (currentAltitude > this.nextEnemySpawnAltitude) {
+            if (Math.random() < 0.5) {
+                this._generateEnemy();
+            }
+            if (this.currentEnemySpawnSpacing > this.MIN_ENEMY_SPACING) {
+                // this.currentEnemySpawnSpacing -= 1
+                this.currentEnemySpawnSpacing -= 10
+            }
+            this.nextEnemySpawnAltitude += this.currentEnemySpawnSpacing;
+            console.log(this.currentEnemySpawnSpacing)
         }
     }
 

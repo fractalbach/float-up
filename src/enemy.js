@@ -3,12 +3,18 @@
 // ==================================================================
 class Enemy {
     static NewRandomEnemy() {
-        let x = randbetween( GAME_WIDTH/4, 3*GAME_WIDTH/4 );
-        let y = -100
         let w = randbetween(20,40)
         let h = randbetween(20,40)
-        let vx = randbetween(-4, 4)
-        let vy = randbetween(0, 4)
+        let x = randbetween( 0, GAME_WIDTH );
+        let y = -3 * h;
+        let vx, vy;
+        if (x < (GAME_WIDTH/2)) {
+            vx = randbetween(0, 4)
+            vy = randbetween(0, 2)
+        } else {
+            vx = randbetween(-4, 0)
+            vy = randbetween(0, 2)
+        }
         return new Enemy(x,y,w,h,vx,vy)
     }
 

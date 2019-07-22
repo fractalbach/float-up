@@ -105,7 +105,7 @@ class Game {
         this.highestScore = 0;
         this.state        = STATE_ON;
         this.fallAnim = {
-            MAX_ITER: 100,
+            MAX_ITER: 50,
             iter: 0,
             saved_background: ''
         }
@@ -197,7 +197,7 @@ class Game {
         this.player.anim = ANIM_JUMP;
         this.fallAnim.saved_background = canvas.style.background;
         this.savedLastAltitude = currentAltitude;
-        q('#endgame_score').innerText = this.savedLastScore;
+        q('#endgame_score').innerText = this.score;
         q('#endgame_message').classList.remove('hidden');
         // q('#score_prompt_score_txt').innerText = this.savedLastScore;
         // GameHighscores.handle(this.savedLastScore);
@@ -205,7 +205,7 @@ class Game {
 
     _doFallingAnimation() {
         this.fallAnim.iter++;
-        currentAltitude -= (this.savedLastAltitude / this.fallAnim.MAX_ITER)
+        currentAltitude -= ((this.savedLastAltitude - SCREEN_MIDDLE) / this.fallAnim.MAX_ITER)
         if (currentAltitude < SCREEN_MIDDLE) { currentAltitude = SCREEN_MIDDLE;}
         GameObjectManager.forEach((balloon)=>{
             balloon.y -= this.fallAnim.iter;

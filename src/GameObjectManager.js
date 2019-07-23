@@ -64,6 +64,11 @@ const GameObjectManager = (function(){
         return result;
     }
 
+    // removes all game objects from the manager.
+    function clear() {
+        objects.clear();
+    }
+
     // forEach has similar behavior to Array.forEach
     function forEach(fn) {
         for (let v of objects.values()) {
@@ -93,7 +98,7 @@ const GameObjectManager = (function(){
         return results;
     }
 
-    // removes objects that are too far off the screen.
+    // removes objects that are off-screen EXCEPT for those ABOVE the screen.
     function cleanOffscreenObjects() {
         for (let [k,v] of objects.entries()) {
             if ((v.y > GAME_HEIGHT) || (v.x < 0) || (v.x > GAME_WIDTH)) {
@@ -107,6 +112,7 @@ const GameObjectManager = (function(){
         size,
         add,
         remove,
+        clear,
         forEach,
         stepAll,
         findCollisionsWith,

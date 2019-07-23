@@ -115,8 +115,8 @@ class Game {
         this.savedLastAltitude;
         this.lastNewBalloonAltitude = currentAltitude;
         this.nextBallonInterval = randbetween(MIN_BALLOON_INTERVAL, MAX_BALLON_INTERVAL);
-        this.DEFAULT_ENEMY_SPACING = 500;
-        this.MIN_ENEMY_SPACING = 5;
+        this.DEFAULT_ENEMY_SPACING = 200;
+        this.MIN_ENEMY_SPACING = 200;
         this.currentEnemySpawnSpacing = this.DEFAULT_ENEMY_SPACING;
         this.nextEnemySpawnAltitude = currentAltitude + this.DEFAULT_ENEMY_SPACING;
         TapLocationDebugger.init(canvas);
@@ -182,13 +182,16 @@ class Game {
     }
 
     _resetGame() {
-        this.savedLastScore = this.score;
         this.savedLastTime = (new Date).getTime() - this.startTime;
+        this.startTime = (new Date()).getTime()
+        this.savedLastScore = this.score;
         this.score = 0;
         currentAltitude = SCREEN_MIDDLE;
         this.lastNewBalloonAltitude = currentAltitude;
         this.currentEnemySpawnSpacing = this.DEFAULT_ENEMY_SPACING;
         this.nextEnemySpawnAltitude = currentAltitude + this.DEFAULT_ENEMY_SPACING;
+        GameObjectManager.clear();
+        this.initExample1();
     }
 
     _startFallAnimation() {
@@ -220,10 +223,8 @@ class Game {
 
     _endFallAnimation() {
         this.state = STATE_ON;
-        this.initExample1();
         canvas.style.background = this.fallAnim.saved_background;
         q('#endgame_message').classList.add('hidden');
-        this.startTime = (new Date()).getTime()
         this._resetGame();
     }
 
@@ -318,8 +319,10 @@ class Game {
                 this._generateEnemy();
             }
             if (this.currentEnemySpawnSpacing > this.MIN_ENEMY_SPACING) {
-                // this.currentEnemySpawnSpacing -= 1
-                this.currentEnemySpawnSpacing -= 10
+                this.currentEnemySpawnSpacing -= 10;
+            }
+            if (this.currentEnemySpawnSpacing < this.MIN_ENEMY_SPACING) {
+                this.currentEnemySpawnSpacing = this.MIN_ENEMY_SPACING;
             }
             this.nextEnemySpawnAltitude += this.currentEnemySpawnSpacing;
             console.log(this.currentEnemySpawnSpacing)
@@ -367,6 +370,7 @@ function main() {
     // ==================================================================
     const DESIRED_DURATION = 15
     const INITIAL_AVERAGE_VALUE = 0
+    const MAX_N_STEPS = 100;
     let running_average_100 = INITIAL_AVERAGE_VALUE;
     let running_average_1k = INITIAL_AVERAGE_VALUE;
     let running_average_10k = INITIAL_AVERAGE_VALUE;
@@ -383,6 +387,11 @@ function main() {
     function RunningAverageLoop(timestamp) {
         let t0 = performance.now();
         let nSteps = Math.floor((timestamp - lastTimestamp)/DESIRED_DURATION);
+        if (nSteps > MAX_N_STEPS) {
+            lastTimestamp = timestamp;
+            window.requestAnimationFrame(RunningAverageLoop);
+            return;
+        }
         for (let i = 0; i < nSteps; i++) {
             doFixedStep();
         }

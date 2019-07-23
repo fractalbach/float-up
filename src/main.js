@@ -115,7 +115,7 @@ class Game {
         this.savedLastAltitude;
         this.lastNewBalloonAltitude = currentAltitude;
         this.nextBallonInterval = randbetween(MIN_BALLOON_INTERVAL, MAX_BALLON_INTERVAL);
-        this.DEFAULT_ENEMY_SPACING = 200;
+        this.DEFAULT_ENEMY_SPACING = 500;
         this.MIN_ENEMY_SPACING = 200;
         this.currentEnemySpawnSpacing = this.DEFAULT_ENEMY_SPACING;
         this.nextEnemySpawnAltitude = currentAltitude + this.DEFAULT_ENEMY_SPACING;

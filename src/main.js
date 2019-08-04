@@ -238,10 +238,10 @@ class Game {
         // this._drawBackground();
         this.gameBackground.draw(ctx);
         TapLocationDebugger.draw();
-        drawPlayerBoundingBox(ctx, this.player);
+        // drawPlayerBoundingBox(ctx, this.player);
         GameObjectManager.forEach(function(object){
             object.draw(ctx);
-            drawBoundingBox(ctx, object);
+            // drawBoundingBox(ctx, object);
         });
         this.player.draw(ctx);
     }

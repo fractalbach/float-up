@@ -214,21 +214,21 @@ class Player {
 
     _MoveTowardCenterOfBalloon() {
         // let xOff = (this.x + this.w/2) - this.myBalloon.x;
-        let xOff = this.x - (this.myBalloon.stringX() + this.myBalloon.stringW() / 2 - this.w/2)
-        let yOff = this.y - (this.myBalloon.stringY() + this.myBalloon.stringH() / 2 - this.h/2)
-        let speed = 1;
+        let xOff = this.x - (this.myBalloon.stringX() + this.myBalloon.stringW() / 2 - this.w + 10)
+        let yOff = this.y - (this.myBalloon.stringY() + this.myBalloon.stringH() / 2 )
+        let speed = 3;
         if (xOff > 5) {
             this.x -= speed
         }
         else if (xOff < -5) {
             this.x += speed
         }
-        // if (yOff > 5) {
-        //     this.y -= speed
-        // }
-        // else if (yOff < -5) {
-        //     this.y += speed
-        // }
+        if (yOff > 5) {
+            this.y -= speed
+        }
+        else if (yOff < -5) {
+            this.y += speed
+        }
     }
 
     _handleCollisions() {

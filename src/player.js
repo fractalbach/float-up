@@ -216,19 +216,19 @@ class Player {
         // let xOff = (this.x + this.w/2) - this.myBalloon.x;
         let xOff = this.x - (this.myBalloon.stringX() + this.myBalloon.stringW() / 2 - this.w/2)
         let yOff = this.y - (this.myBalloon.stringY() + this.myBalloon.stringH() / 2 - this.h/2)
-        let speed = 5;
+        let speed = 1;
         if (xOff > 5) {
             this.x -= speed
         }
         else if (xOff < -5) {
             this.x += speed
         }
-        if (yOff > 5) {
-            this.y -= speed
-        }
-        else if (yOff < -5) {
-            this.y += speed
-        }
+        // if (yOff > 5) {
+        //     this.y -= speed
+        // }
+        // else if (yOff < -5) {
+        //     this.y += speed
+        // }
     }
 
     _handleCollisions() {
@@ -329,13 +329,10 @@ class Player {
         //     this.vx = 0;
         // }
         let dy = data.tapy - (this.y + this.h/2)   // HANDLE Y DIRECTION
-        if (dy < -100) {
+        if (dy < -150) {
             this.jump();
         }
-        else if (dy < -50) {
-            this.moveUp();
-        }
-        else if (dy > 50) {
+        else if (dy > 100) {
             this.moveDown();
         }
         // if ((dy > -20) && (dy < 20) && (this.vy < 0)) {

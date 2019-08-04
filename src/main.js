@@ -344,125 +344,47 @@ function main() {
     // __________________________________________________________________
     //      Original Game Loop
     // ==================================================================
-    function loop() {
-        game.step();
+    // function loop() {
+    //     game.step();
+    //     game.clearScreen();
+    //     game.drawScreen();
+    //     game.updateDebugger();
+    //     window.requestAnimationFrame(loop);
+    // }
+    //
+    // function sleep(milliseconds) {
+    //     let start = new Date().getTime();
+    //     for (let i = 0; i < 1e7; i++) {
+    //         if ((new Date().getTime() - start) > milliseconds) { break; }
+    //     }
+    // }
+
+    // __________________________________________________________________
+    //      Better Game Loop
+    // ==================================================================
+    const DESIRED_DURATION = 15
+    const MAX_N_STEPS = 10;
+    let lastTimestamp = performance.now();
+
+    function loop(timestamp) {
+        let t0 = performance.now();
+        let nSteps = Math.floor((timestamp - lastTimestamp)/DESIRED_DURATION);
+        if (nSteps > MAX_N_STEPS) {
+            nSteps = MAX_N_STEPS
+            lastTimestamp = t0;
+        } else {
+            lastTimestamp += nSteps*DESIRED_DURATION;
+        }
+        for (let i = 0; i < nSteps; i++) {
+            game.step();
+        }
         game.clearScreen();
         game.drawScreen();
         game.updateDebugger();
         window.requestAnimationFrame(loop);
     }
 
-    function sleep(milliseconds) {
-        let start = new Date().getTime();
-        for (let i = 0; i < 1e7; i++) {
-            if ((new Date().getTime() - start) > milliseconds) { break; }
-        }
-    }
-
-
-    // __________________________________________________________________
-    //      Running Average Loop
-    // ==================================================================
-    const DESIRED_DURATION = 15
-    const INITIAL_AVERAGE_VALUE = 0
-    const MAX_N_STEPS = 10;
-    let running_average_100 = INITIAL_AVERAGE_VALUE;
-    let running_average_1k = INITIAL_AVERAGE_VALUE;
-    let running_average_10k = INITIAL_AVERAGE_VALUE;
-    let actual_step_duration = 0;
-    let total_steps_taken = 0;
-    let lastTimestamp = performance.now();
-
-    // Debugger.add('running_average_100', 'running_average_100');
-    // Debugger.add('running_average_1k', 'running_average_1k');
-    // Debugger.add('running_average_10k', 'running_average_10k');
-    // Debugger.add('actual_step_duration', 'actual_step_duration');
-    // Debugger.add('total_steps_taken', 'total_steps_taken');
-
-    function RunningAverageLoop(timestamp) {
-        let t0 = performance.now();
-        let nSteps = Math.floor((timestamp - lastTimestamp)/DESIRED_DURATION);
-        if (nSteps > MAX_N_STEPS) {
-            nSteps = MAX_N_STEPS
-        }
-        for (let i = 0; i < nSteps; i++) {
-            doFixedStep();
-        }
-        total_steps_taken++;
-        lastTimestamp += nSteps*DESIRED_DURATION;
-        // Debugger.set('running_average_100', running_average_100.toFixed(3) + ' ms');
-        // Debugger.set('running_average_1k', running_average_1k.toFixed(3) + ' ms');
-        // Debugger.set('running_average_10k', running_average_10k.toFixed(3) + ' ms');
-        // Debugger.set('actual_step_duration', actual_step_duration.toFixed(3) + ' ms');
-        // Debugger.set('total_steps_taken', total_steps_taken);
-        game.clearScreen();
-        game.drawScreen();
-        game.updateDebugger();
-        // let t_diff = performance.now() - t0;
-        // actual_step_duration = t_diff
-        // running_average_100 = 0.9 * running_average_100 + 0.1 * t_diff;
-        // running_average_1k = 0.99 * running_average_1k + 0.01 * t_diff;
-        // running_average_10k = 0.999 * running_average_10k + 0.001 * t_diff;
-        window.requestAnimationFrame(RunningAverageLoop);
-    }
-
-    function doFixedStep() {
-        let t0 = performance.now();
-        game.step();
-        let t_diff = performance.now() - t0;
-    }
-
-    window.requestAnimationFrame(RunningAverageLoop)
-
-    // __________________________________________________________________
-    //      Better Game Loop
-    // ==================================================================
-    // let t0 = performance.now()
-    // let t1 = performance.now()
-    // let diff = t1 - t0;
-    // let nStepsPrev = 0;
-    // let nSteps = 0;
-    // const DESIRED_STEP_DURATION = 15;
-    // let start_step_time = 0;
-    // let actual_step_duration = 0;
-    // const TOO_MANY_NSTEPS = 20;    // used for epic framerate fail mitigation.
-    // let nStepsIncreased = 0;
-    // let occurencesOfTooSlow = 0; // tracks epic framerate fails
-    // let totalSteps = 0;
-    // let startTime = performance.now()
-    // let stepsPerUnitTime = 0;
-    // function BETTERloop() {
-    //     t1 = performance.now();
-    //     nStepsPrev = nSteps;
-    //     nSteps = Math.floor( (t1 - t0) / DESIRED_STEP_DURATION );
-    //     if (nSteps < 0) { nSteps = 0; }
-    //     totalSteps += nSteps;
-    //     if ((nSteps > TOO_MANY_NSTEPS) && (nStepsPrev > TOO_MANY_NSTEPS)) { occurencesOfTooSlow++ };
-    //     if (occurencesOfTooSlow > 5) {
-    //         console.warn("Abandon Ship! We are moving to a simpler animation loop!")
-    //         return window.requestAnimationFrame(loop);
-    //     }
-    //     // Debugger.set('occurencesOfTooSlow', occurencesOfTooSlow)
-    //     for (let i = 0; i < nSteps; i++) {
-    //         start_step_time = performance.now();
-    //         game.step();
-    //         //sleep(10);
-    //         actual_step_duration = performance.now() - start_step_time;
-    //         // Debugger.set('actual_step_duration', actual_step_duration.toFixed(2))
-    //     }
-    //     if (nSteps > 0) { t0 += DESIRED_STEP_DURATION * nSteps; }
-    //     stepsPerUnitTime = totalSteps / ((performance.now() - startTime)/1000)
-    //     // Debugger.set('stepsPerSecond', Math.floor(stepsPerUnitTime))
-    //     // Debugger.set('fixedSteps', nSteps)
-    //     game.clearScreen();
-    //     game.drawScreen();
-    //     game.updateDebugger();
-    //     window.requestAnimationFrame(BETTERloop);
-    // }
-    //
-    //
-    // window.requestAnimationFrame(BETTERloop);
-    //
+    window.requestAnimationFrame(loop)
 }
 
 

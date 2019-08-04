@@ -320,7 +320,7 @@ class Game {
                 this.currentEnemySpawnSpacing = this.MIN_ENEMY_SPACING;
             }
             this.nextEnemySpawnAltitude += this.currentEnemySpawnSpacing;
-            console.log(this.currentEnemySpawnSpacing)
+            // console.log(this.currentEnemySpawnSpacing)
         }
     }
 

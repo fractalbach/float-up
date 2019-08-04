@@ -121,7 +121,7 @@ class Player {
             this.myBalloon.y += MAX_JUMP_SPEED/2
         }
         else {
-            this.y += MAX_JUMP_SPEED;
+            this.y += MAX_JUMP_SPEED/2;
         }
     }
 
@@ -214,9 +214,9 @@ class Player {
 
     _MoveTowardCenterOfBalloon() {
         // let xOff = (this.x + this.w/2) - this.myBalloon.x;
-        let xOff = (this.x + this.w) - this.myBalloon.x;
-        let yOff = (this.y) - (this.myBalloon.y + 2*this.myBalloon.r);
-        let speed = 1;
+        let xOff = this.x - (this.myBalloon.stringX() + this.myBalloon.stringW() / 2 - this.w/2)
+        let yOff = this.y - (this.myBalloon.stringY() + this.myBalloon.stringH() / 2 - this.h/2)
+        let speed = 5;
         if (xOff > 5) {
             this.x -= speed
         }
@@ -310,6 +310,7 @@ class Player {
         if (data.requestjump === true) { this.jump(); }
         if (data.tapvalid === true) {
             this.handleTapInput(data);
+            // this._experimentalHandleTapInput(data);
         } else {
             this.handleKeyboardInput(data);
         }
@@ -324,16 +325,37 @@ class Player {
         else if (dx > 20) {
             this.moveRight();
         }
-        else {
-            this.vx = 0;
-        }
+        // else {
+        //     this.vx = 0;
+        // }
         let dy = data.tapy - (this.y + this.h/2)   // HANDLE Y DIRECTION
-        if ((dy < -50)) {
+        if (dy < -100) {
             this.jump();
+        }
+        else if (dy < -50) {
+            this.moveUp();
+        }
+        else if (dy > 50) {
+            this.moveDown();
         }
         // if ((dy > -20) && (dy < 20) && (this.vy < 0)) {
         //     this.vy = 0
         // }
+    }
+
+    _experimentalHandleTapInput(data) {
+        if (data.tapx < (GAME_WIDTH/2 - 20)) {
+            this.moveLeft();
+        }
+        else if (data.tapx > (GAME_WIDTH/2 + 20)) {
+            this.moveRight();
+        }
+        if (data.tapy < (GAME_HEIGHT/2 - 20)) {
+            this.jump();
+        }
+        else if (data.tapy > (GAME_HEIGHT/2 + 20)) {
+            this.moveDown();
+        }
     }
 
     handleKeyboardInput(data) {

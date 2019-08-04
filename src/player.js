@@ -58,7 +58,6 @@ class Player {
         if (this.grabCooldown > 0) { return; }
         // this.y = balloon.y;
         // console.log("grab!")
-        this.anim = ANIM_GRAB;
         this.vy = 0;
         this.vx = 0;
         this.isFalling = false;
@@ -67,6 +66,7 @@ class Player {
         balloon.touch();
         this.jumpCooldown = MAX_JUMP_COOLDOWN;
         this.jumpUpCounter = 0;
+        this._updateGrabAnimation();
     }
 
     moveLeft() {
@@ -157,7 +157,10 @@ class Player {
         if (this.jumpCooldown > 0) { this.jumpCooldown-- }
         if (this.isGrabbing === true) { this.jumpUpCounter = 0; }
         this._handleMyBalloon();
-        if (this.isGrabbing === true) { return; }
+        if (this.isGrabbing === true) {
+            this._updateGrabAnimation();
+            return;
+        }
         // if (this.isGrabbing === true) {
         //     this.jumpUpCounter = 0;
         //     if (this.myBalloon.hasPopped() === false) {
@@ -212,9 +215,18 @@ class Player {
         this._MoveTowardCenterOfBalloon()
     }
 
+    _updateGrabAnimation() {
+        if ((this.x + this.w/2 - this.myBalloon.x) < 0) {
+            this.anim = ANIM_GRAB_RIGHT;
+        } else {
+            this.anim = ANIM_GRAB_LEFT
+        }
+    }
+
+
     _MoveTowardCenterOfBalloon() {
-        // let xOff = (this.x + this.w/2) - this.myBalloon.x;
-        let xOff = this.x - (this.myBalloon.stringX() + this.myBalloon.stringW() / 2 - this.w + 10)
+        let xOff = (this.x + this.w/2) - this.myBalloon.x;
+        // let xOff = this.x - (this.myBalloon.stringX() + this.myBalloon.stringW() / 2 - this.w)
         let yOff = this.y - (this.myBalloon.stringY() + this.myBalloon.stringH() / 2 )
         let speed = 3;
         if (xOff > 5) {

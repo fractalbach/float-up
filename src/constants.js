@@ -30,15 +30,17 @@ let currentAltitude = SCREEN_MIDDLE;
 // retrieve images.
 const IMG_BALLOON = q("#img_balloon");
 const IMG_STAND   = q("#img_stand");
-const IMG_GRAB    = q("#img_grab");
 const IMG_JUMP    = q("#img_jump");
 const IMG_POP     = q("#img_pop");
 const IMG_BACKGROUND = q("#img_background");
+const IMG_GRAB_LEFT    = q("#img_grab_left");
+const IMG_GRAB_RIGHT    = q("#img_grab_right");
 
 // enums: animation
-const ANIM_STAND = 101;  // player is standing on a platform
-const ANIM_GRAB  = 102;  // player is holding a balloon
-const ANIM_JUMP  = 103;  // player is somewhere in the air
+const ANIM_STAND = 101;
+const ANIM_JUMP  = 102;
+const ANIM_GRAB_LEFT  = 103;
+const ANIM_GRAB_RIGHT = 104;
 
 // enums: enemy types
 const OBJ_TYPE_PLAYER = 901;
@@ -50,7 +52,8 @@ const OBJ_TYPE_ENEMY = 903;
 // This is likely to expand during development as more animations are added.
 const ANIMS = new Map([
     [ANIM_STAND, IMG_STAND],
-    [ANIM_GRAB,  IMG_GRAB],
+    [ANIM_GRAB_LEFT,  IMG_GRAB_LEFT],
+    [ANIM_GRAB_RIGHT,  IMG_GRAB_RIGHT],
     [ANIM_JUMP,  IMG_JUMP],
 ]);
 

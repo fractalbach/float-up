@@ -48,11 +48,6 @@ const GameView = (function(){
 //      General Drawing Functions
 // ==================================================================
 
-function drawCircle(ctx, x, y, r) {
-    ctx.beginPath();
-    ctx.arc(x, y, r, 0, 2*Math.PI);
-    ctx.fill();
-}
 
 function drawLine(ctx, x0, y0, xf, yf) {
     ctx.beginPath();
@@ -370,7 +365,7 @@ function main() {
     // ==================================================================
     const DESIRED_DURATION = 15
     const INITIAL_AVERAGE_VALUE = 0
-    const MAX_N_STEPS = 100;
+    const MAX_N_STEPS = 10;
     let running_average_100 = INITIAL_AVERAGE_VALUE;
     let running_average_1k = INITIAL_AVERAGE_VALUE;
     let running_average_10k = INITIAL_AVERAGE_VALUE;
@@ -388,9 +383,7 @@ function main() {
         let t0 = performance.now();
         let nSteps = Math.floor((timestamp - lastTimestamp)/DESIRED_DURATION);
         if (nSteps > MAX_N_STEPS) {
-            lastTimestamp = timestamp;
-            window.requestAnimationFrame(RunningAverageLoop);
-            return;
+            nSteps = MAX_N_STEPS
         }
         for (let i = 0; i < nSteps; i++) {
             doFixedStep();

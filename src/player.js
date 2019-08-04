@@ -73,6 +73,9 @@ class Player {
         if (this.x < 0) { return; }
         this.vx = 0;
         this.x -= MAX_PLAYER_SPEED;
+        if (this.isGrabbing === true) {
+            this.myBalloon.x -= MAX_PLAYER_SPEED;
+        }
         // if (this.isGrabbing === false) { this.vx = -MAX_PLAYER_SPEED /3 }
         // if (this.isGrabbing) { this.x -= MAX_PLAYER_SPEED; }
         // else { this.vx = -MAX_PLAYER_SPEED }
@@ -82,6 +85,9 @@ class Player {
         if (this.x > GAME_WIDTH - this.w) { return; }
         this.vx = 0;
         this.x += MAX_PLAYER_SPEED;
+        if (this.isGrabbing === true) {
+            this.myBalloon.x += MAX_PLAYER_SPEED;
+        }
         // if (this.isGrabbing === false) { this.vx = MAX_PLAYER_SPEED /3 }
         // if (this.isGrabbing) { this.x += MAX_PLAYER_SPEED; }
         // else { this.vx = MAX_PLAYER_SPEED; }
@@ -90,24 +96,33 @@ class Player {
     moveUp() {
         if (this.isGrabbing === true) {
             this.y -= MAX_JUMP_SPEED/2
-            return;
+            this.myBalloon.y -= MAX_JUMP_SPEED/2
         }
-        this.jumpUpCounter++;
-        if (this.jumpUpCounter < MAX_JUMP_UP_COUNTER) {
-            this.y -= MAX_JUMP_SPEED;
-            this.vy = 0;
+        else {
+            this.jump();
         }
-        if (this.jumpUpCounter === MAX_JUMP_UP_COUNTER) {
-            this.vy = -MAX_JUMP_SPEED/2
-        }
+        // if (this.isGrabbing === true) {
+        //     this.y -= MAX_JUMP_SPEED/2
+        //     return;
+        // }
+        // this.jumpUpCounter++;
+        // if (this.jumpUpCounter < MAX_JUMP_UP_COUNTER) {
+        //     this.y -= MAX_JUMP_SPEED;
+        //     this.vy = 0;
+        // }
+        // if (this.jumpUpCounter === MAX_JUMP_UP_COUNTER) {
+        //     this.vy = -MAX_JUMP_SPEED/2
+        // }
     }
 
     moveDown() {
         if (this.isGrabbing === true) {
             this.y += MAX_JUMP_SPEED/2;
-            return;
+            this.myBalloon.y += MAX_JUMP_SPEED/2
         }
-        this.y += MAX_JUMP_SPEED;
+        else {
+            this.y += MAX_JUMP_SPEED;
+        }
     }
 
     specialMove(dx) {
@@ -140,30 +155,82 @@ class Player {
         this.handleInputData();
         this._handleCollisions();
         if (this.jumpCooldown > 0) { this.jumpCooldown-- }
-        if (this.isGrabbing === true) {
-            this.jumpUpCounter = 0;
-            if (this.myBalloon.hasPopped() === false) {
-                if (GameObjectManager.hasCollision(this, this.myBalloon)) {
-                    this.y -= this.myBalloon.rising_speed;
-                    this.vx = 0;
-                    return;
-                }
-                // FALLTHROUGH: you've let go of your ballon.
-            }
-            // uh oh, you've lost your balloon!
-            this.myBalloon = undefined;
-            this.isGrabbing = false;
-            // Since your ballon is now gone, the cooldowns reset.
-            this.jumpCooldown = 0;
-            this.grabCooldown = 0;
-        }
+        if (this.isGrabbing === true) { this.jumpUpCounter = 0; }
+        this._handleMyBalloon();
+        if (this.isGrabbing === true) { return; }
+        // if (this.isGrabbing === true) {
+        //     this.jumpUpCounter = 0;
+        //     if (this.myBalloon.hasPopped() === false) {
+        //         if (GameObjectManager.hasCollision(this, this.myBalloon)) {
+        //             this.y -= this.myBalloon.rising_speed;
+        //             this.vx = 0;
+        //             return;
+        //         }
+        //         // FALLTHROUGH: you've let go of your ballon.
+        //     }
+        //     // uh oh, you've lost your balloon!
+        //     this.myBalloon = undefined;
+        //     this.isGrabbing = false;
+        //     // Since your ballon is now gone, the cooldowns reset.
+        //     this.jumpCooldown = 0;
+        //     this.grabCooldown = 0;
+        // }
 
-        if (this.grabCooldown > 0) { this.grabCooldown-- }
+        if (this.grabCooldown > 0) { this.grabCooldown--; }
         // this._doFriction();
         this._doGravity();
         this._stepY();
         this._stepX();
     }
+
+    // Handles all procedures and checks for the player-balloon relationship.
+    // Gets called each game step.
+    _handleMyBalloon() {
+        if (this.myBalloon === undefined || this.myBalloon.hasPopped()) {
+            this._OhNoMyBalloonIsGone();
+        }
+        else if (GameObjectManager.hasCollision(this, this.myBalloon)) {
+            this._RiseWithBalloon();
+        }
+        else {
+            this._OhNoMyBalloonIsGone();
+        }
+    }
+
+    _OhNoMyBalloonIsGone() {
+        // uh oh, you've lost your balloon!
+        this.myBalloon = undefined;
+        this.isGrabbing = false;
+        // Since your ballon is now gone, the cooldowns reset.
+        this.jumpCooldown = 0;
+        this.grabCooldown = 0;
+    }
+
+    _RiseWithBalloon() {
+        this.y -= this.myBalloon.rising_speed;
+        this.vx = 0;
+        this._MoveTowardCenterOfBalloon()
+    }
+
+    _MoveTowardCenterOfBalloon() {
+        // let xOff = (this.x + this.w/2) - this.myBalloon.x;
+        let xOff = (this.x + this.w) - this.myBalloon.x;
+        let yOff = (this.y) - (this.myBalloon.y + 2*this.myBalloon.r);
+        let speed = 1;
+        if (xOff > 5) {
+            this.x -= speed
+        }
+        else if (xOff < -5) {
+            this.x += speed
+        }
+        if (yOff > 5) {
+            this.y -= speed
+        }
+        else if (yOff < -5) {
+            this.y += speed
+        }
+    }
+
     _handleCollisions() {
         let collisions = GameObjectManager.findCollisionsWith(this);
         let gotHitByEnemey = false;
@@ -211,7 +278,6 @@ class Player {
         this.isFalling = false;
         this.anim = ANIM_STAND;
         this.jumpUpCounter = 0;
-
     }
 
     _stepX() {
@@ -274,7 +340,7 @@ class Player {
         if (data.left === true) { this.moveLeft(); }
         if (data.right === true) { this.moveRight(); }
         if (data.down === true) { this.moveDown(); }
-        // if (data.up === true) { this.moveUp(); }
+        if (data.up === true) { this.moveUp(); }
         if ((data.space === true)||(data.up === true)) { this.jump(); }
     }
 
